@@ -14,6 +14,7 @@ An interactive 3D atlas of **physical and energetic anatomy**. It shows real ana
 - **Watch the energy flow.** Particles spiral into open vortices and out of closed ones. The nadis pulse from each chakra to its organs, and the vertical current dims as field harmony drops.
 - **Explore the aura in 7 layers.** Closed chakras show up as dark patches at the matching height; overactive chakras show up as flares.
 - **Use the Atlas.** Search and browse every structure. Each one has an info card covering its psychological function, gland, energy pathway and sources.
+- **Switch between a male and a female body** with the Male / Female button. The internal organs, chakras and aura are shared; the body surface, gonads, reproductive organs and breasts change.
 - **Load ready-made scenarios:** closed heart, overly mental, excessive will, stopped root, and more.
 
 ## Run
@@ -30,6 +31,7 @@ You can link straight to a given state with URL parameters, for example:
 - `?scenario=closed_heart&sel=chakra:4:front`
 - `?aura=all&layers=hara,core&view=hara`
 - `?layers=skeleton&sel=organ:figado`
+- `?sex=female&sel=organ:reprodutor`
 
 ## Structure
 
@@ -40,7 +42,7 @@ You can link straight to a given state with URL parameters, for example:
 | `js/anatomy.js` | Body and organs: real models plus procedural fallbacks |
 | `js/energy.js` | Chakras, nadis, particles, aura, hara, Core Star |
 | `js/ui.js`, `js/main.js` | Interface and scene |
-| `models/*.glb` | Anatomy models exported from Z-Anatomy (Draco-compressed) |
+| `models/*.glb` | Anatomy models (Draco-compressed): Z-Anatomy male body, MPFB female body, female organs |
 | `tools/` | Blender scripts that regenerate `models/` |
 
 ## Anatomy models
@@ -51,11 +53,18 @@ You can link straight to a given state with URL parameters, for example:
 blender -b --factory-startup --disable-autoexec Startup.blend --python tools/zanatomy_export.py -- models
 ```
 
-These sources have no Z-Anatomy model, so the app still draws them as simple shapes: aorta/blood vessels, vagus nerve, small intestine, and female reproductive organs.
+The female body is built by `tools/female_export.py`. It uses the [MPFB](https://extensions.blender.org/add-ons/mpfb/) extension (MakeHuman for Blender) to generate the body, lowers the arms to the anatomical position, and fits the body to the male model (same height, back aligned, torso depth matched so the shared organs stay inside). It also models the female organs procedurally: uterus, fallopian tubes with fimbriae, ovarian ligaments, vagina, ovaries and mammary glands (lobes and ducts). Run it with:
+
+```bash
+blender -b --python tools/female_export.py -- models
+```
+
+These structures have no free model yet, so the app still draws them as simple shapes: aorta/blood vessels, vagus nerve and small intestine. The skeleton and pelvis are male in both bodies.
 
 ## Credits and license
 
 - **Anatomy models:** Z-Anatomy, *The libre 3D atlas of anatomy* (CC BY-SA 4.0), derived from **BodyParts3D**, © The Database Center for Life Science (CC BY-SA 2.1 Japan). The files in `models/` are distributed under **CC BY-SA 4.0**.
+- **Female body:** generated with MPFB / MakeHuman; its core assets are CC0. The female organs in `models/orgaos_f.glb` were modeled for this project and are released under CC0.
 - **Energetic model:** Barbara Brennan, *Hands of Light* and *Light Emerging*.
 
 Educational tool. Not a medical diagnosis.

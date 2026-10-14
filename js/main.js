@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { CHAKRAS, ORGANS, findDeep, AURA_LAYERS, PRESETS } from './data.js';
-import { computeAll, onChange, loadState } from './state.js';
+import { computeAll, onChange, loadState, emit, body as bodyState, organName, organPresent } from './state.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { buildBody, buildOrgans, loadRealAnatomy, skeletonMesh } from './anatomy.js';
 import { buildEnergy } from './energy.js';
@@ -110,7 +110,7 @@ function positionOf(sel) {
   return new THREE.Vector3(0, 1.1, 0);
 }
 function nameOf(sel) {
-  if (sel.kind === 'organ') return ORGANS.find(o => o.id === sel.id).name;
+  if (sel.kind === 'organ') return organName(ORGANS.find(o => o.id === sel.id));
   if (sel.kind === 'chakra') { const c = CHAKRAS.find(x => x.id === sel.id); return `${c.name} chakra`; }
   if (sel.kind === 'hara' || sel.kind === 'core') return findDeep(sel.id).name;
   if (sel.kind === 'aura') return AURA_LAYERS[sel.n - 1].name;
@@ -169,16 +169,58 @@ const app = {
   setAuraOpacity: v => { energy.auraUniforms.uOpacity.value = v; },
   setSpeed: v => { speed = v; },
   setGlandsOnly: v => { showGlandsOnly = v; applyOrganVisibility(); },
+  get sex() { return bodyState.sex; },
+  setSex,
   setSystem: (s, v) => { v ? hiddenSystems.delete(s) : hiddenSystems.add(s); applyOrganVisibility(); },
 };
 
 function applyOrganVisibility() {
   for (const o of ORGANS) {
-    organs.meshes[o.id].visible = !hiddenSystems.has(o.system) && (!showGlandsOnly || o.gland);
+    organs.meshes[o.id].visible = organPresent(o) && !hiddenSystems.has(o.system) && (!showGlandsOnly || o.gland);
+  }
+}
+
+// ---------- Male / female body ----------
+// Internal organs are shared (Z-Anatomy); the body surface, gonads, reproductive
+// organs and breasts are swapped. Male geometries are kept to switch back.
+const SEX_ORGANS = ['gonadas', 'reprodutor', 'mamas'];
+const maleGeo = {
+  silhouette: real?.silhouette,
+  organs: Object.fromEntries(SEX_ORGANS.map(id => [id, organs.meshes[id].geometry])),
+};
+let sexBusy = false;
+async function setSex(sex) {
+  if (!real || sexBusy || sex === bodyState.sex) return;
+  sexBusy = true;
+  try {
+    const geo = sex === 'F' ? await real.female() : maleGeo;
+    bodyState.sex = sex;
+    if (geo.silhouette) {
+      for (const m of body.group.children) m.geometry = geo.silhouette;
+      energy.setBodyGeometry(geo.silhouette);
+    }
+    for (const id of SEX_ORGANS) {
+      const g = geo.organs[id];
+      if (!g) continue;
+      organs.meshes[id].geometry = g;
+      g.computeBoundingBox();
+      organs.centers[id] = g.boundingBox.getCenter(new THREE.Vector3());
+    }
+    energy.setOrganCenters(organs.centers);
+    applyOrganVisibility();
+    if (focus?.kind === 'organ' && !organPresent(ORGANS.find(o => o.id === focus.id))) app.select(null);
+    emit();   // refresh metrics, impact list and info card with the new names
+    if (focus) selLabelEl.textContent = nameOf(focus);
+  } catch (err) {
+    console.warn('Female body models unavailable.', err);
+  } finally {
+    sexBusy = false;
+    ui.syncSex();
   }
 }
 
 const ui = initUI(app);
+applyOrganVisibility();
 onChange(() => { metrics = computeAll(); ui.refresh(metrics); if (focus) ui.showInfo(focus, metrics); });
 ui.refresh(metrics);
 
@@ -278,6 +320,7 @@ if (PRESETS[params.get('scenario')]) loadState(PRESETS[params.get('scenario')].s
 const auraParam = params.get('aura') === 'all' ? '1,2,3,4,5,6,7' : params.get('aura') ?? '';
 for (const n of auraParam.split(',').filter(Boolean)) app.setAuraLayer(+n, true);
 for (const k of (params.get('layers') ?? '').split(',').filter(Boolean)) { app.setVisible(k, true); ui.syncToggles(); }
+if (params.get('sex') === 'female') await setSex('F');
 if (params.get('sel')) {
   const [kind, id, aspect] = params.get('sel').split(':');
   app.select(kind === 'aura' ? { kind, n: +id } : { kind, id, aspect }, { fly: !params.get('view') });

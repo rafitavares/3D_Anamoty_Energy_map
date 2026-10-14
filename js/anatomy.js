@@ -214,6 +214,8 @@ const BUILDERS = {
     for (const s of [1, -1]) g.add(tube([V(0.02 * s, 0.955, 0.02), V(0.04 * s, 0.96, 0.02), V(0.055 * s, 0.948, 0.015)], 0.003, m, 12));
     return g;
   },
+  // Só existe no corpo feminino; a geometria chega com models/orgaos_f.glb.
+  mamas: m => new THREE.Mesh(new THREE.BufferGeometry(), m),
   coluna: m => {
     const g = new THREE.Group();
     const curve = new THREE.CatmullRomCurve3([V(0, 0.84, -0.08), V(0, 0.95, -0.095), V(0, 1.05, -0.07), V(0, 1.2, -0.075),
@@ -241,7 +243,7 @@ export const ORGAN_COLORS = {
   coracao: '#a3282e', circulacao: '#c41e2e', vago: '#f1dc8c',
   estomago: '#e3a28a', figado: '#7d2e24', vesicula: '#557f3c', pancreas: '#e6c07c', baco: '#6f2a3a',
   intestinos: '#dea08f', rim_e: '#8b3a31', rim_d: '#8b3a31', suprarrenais: '#e0a54a', bexiga: '#e6c3a2',
-  gonadas: '#e8b8a8', reprodutor: '#d98f86', coluna: '#ece3cf', medula: '#eadfc2',
+  gonadas: '#e8b8a8', reprodutor: '#d98f86', mamas: '#efc2b0', coluna: '#ece3cf', medula: '#eadfc2',
 };
 
 // ---------- Modelos reais (Z-Anatomy, CC BY-SA 4.0) ----------
@@ -271,7 +273,11 @@ export async function loadRealAnatomy(onProgress) {
   silhouette = Object.values(body)[0] ?? null;
   // Esqueleto: carregado sob demanda, quando a camada é ligada.
   const skeleton = () => load('models/esqueleto.glb').then(g => Object.values(geometries(g))[0]);
-  return { organs, skeleton };
+  // Corpo feminino (MPFB, CC0) e órgãos femininos: carregados na primeira troca.
+  let femalePromise = null;
+  const female = () => femalePromise ??= Promise.all([load('models/silhueta_f.glb'), load('models/orgaos_f.glb')])
+    .then(([b, o]) => ({ silhouette: Object.values(geometries(b))[0], organs: geometries(o) }));
+  return { organs, skeleton, female, silhouette };
 }
 
 export function skeletonMesh(geo) {
@@ -288,7 +294,7 @@ export function buildOrgans(real) {
   const meshes = {};
   for (const id of Object.keys(BUILDERS)) {
     const geo = real?.organs[id];
-    const mat = geo ? realOrganMat(ORGAN_COLORS[id]) : organMat(ORGAN_COLORS[id]);
+    const mat = real ? realOrganMat(ORGAN_COLORS[id]) : organMat(ORGAN_COLORS[id]);
     const obj = geo ? new THREE.Mesh(geo, mat) : BUILDERS[id](mat);
     obj.userData = { kind: 'organ', id, mat, base: new THREE.Color(ORGAN_COLORS[id]), real: !!geo };
     obj.traverse(o => { o.userData.pickId = id; o.userData.pickKind = 'organ'; });

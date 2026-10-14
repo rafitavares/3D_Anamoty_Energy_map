@@ -162,9 +162,16 @@ export const ORGANS = [
 
   // Pelvis
   { id: 'gonadas', name: 'Gonads (ovaries / testes)', system: 'Endocrine', gland: true, links: [{ c: '2', w: 1.2 }],
-    info: 'Glands of the sacral chakra.' },
+    info: 'Glands of the sacral chakra.',
+    male: { name: 'Gonads (testes)', info: 'Glands of the sacral chakra. They produce sperm and testosterone.' },
+    female: { name: 'Gonads (ovaries)', info: 'Glands of the sacral chakra. They hold the eggs and produce estrogen and progesterone.' } },
   { id: 'reprodutor', name: 'Reproductive system', system: 'Reproductive', links: [{ c: '2', w: 1 }],
-    info: 'Governed by the sacral chakra.' },
+    info: 'Governed by the sacral chakra.',
+    male: { name: 'Reproductive system (prostate & penis)', info: 'Prostate, seminal glands and penis. Governed by the sacral chakra.' },
+    female: { name: 'Reproductive system (uterus, tubes & vagina)', info: 'Uterus, fallopian tubes with their fimbriae, ovarian ligaments and vagina. Governed by the sacral chakra.' } },
+  { id: 'mamas', name: 'Breasts (mammary glands)', system: 'Reproductive', sex: 'F',
+    links: [{ c: '4', w: 0.8, source: 'complementary' }],
+    info: 'About 15 lobes of glandular tissue whose milk ducts converge on the nipple. Not in Brennan’s table; linked to the heart chakra by location, as in many traditions.' },
 
   // Axis
   { id: 'coluna', name: 'Spinal column', system: 'Skeletal', links: [{ c: '1', w: 1 }], info: 'Governed by the root chakra.' },

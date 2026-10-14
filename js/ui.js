@@ -1,5 +1,5 @@
 import { CHAKRAS, ORGANS, AURA_LAYERS, HARA, HARA_LINE, CORE_STAR, findDeep, PRESETS } from './data.js';
-import { state, setAspect, loadState, notation, aspectMetrics } from './state.js';
+import { state, setAspect, loadState, notation, aspectMetrics, organName, organInfo, organPresent } from './state.js';
 
 const $ = s => document.querySelector(s);
 const h = (tag, attrs = {}, ...kids) => {
@@ -45,6 +45,12 @@ export function initUI(app) {
     preset.value = '';
   });
   document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => app.view(b.dataset.view)));
+  const sexButtons = [...document.querySelectorAll('[data-sex]')];
+  sexButtons.forEach(b => b.addEventListener('click', () => {
+    sexButtons.forEach(x => { x.disabled = true; });
+    app.setSex(b.dataset.sex);
+  }));
+  if (!app.hasRealModels) $('.sex').hidden = true;
 
   // ---------- Chakras tab ----------
   const list = $('#chakra-list');
@@ -99,7 +105,7 @@ export function initUI(app) {
     toggle('Skin (silhouette)', ...vis('skin')),
     slider('Skin opacity', 0, 1.5, 0.05, app.skinOpacity, app.setSkinOpacity),
     toggle('Organs', ...vis('organs')),
-    app.hasRealModels ? toggle('Skeleton', ...vis('skeleton')) : null,
+    app.hasRealModels ? toggle('Skeleton (male model)', ...vis('skeleton')) : null,
     (() => { let on = false; return toggle('Endocrine glands only', () => on, v => { on = v; app.setGlandsOnly(v); }); })(),
     h('details', {}, h('summary', {}, 'Systems'),
       ...systems.map(s => { let on = true; return toggle(s, () => on, v => { on = v; app.setSystem(s, v); }); })),
@@ -131,29 +137,42 @@ export function initUI(app) {
   const group = (title, items) => {
     const g = h('div', { class: 'agroup' }, h('h4', {}, title));
     for (const [label, sel, color] of items) {
+      const text = h('span', {}, label);
       const b = h('button', { class: 'aitem', onclick: () => { app.select(sel); document.body.classList.remove('show-left'); } },
-        color ? h('span', { class: 'dot', style: `--c:${color}` }) : null, label);
-      entries.push({ b, text: label.toLowerCase() });
+        color ? h('span', { class: 'dot', style: `--c:${color}` }) : null, text);
+      const organ = sel.kind === 'organ' ? ORGANS.find(o => o.id === sel.id) : null;
+      entries.push({ b, text, organ, label });
       g.append(b);
     }
     atlas.append(g);
   };
   group('Chakras', CHAKRAS.map(c => [`${c.n}. ${c.name} (${c.sanskrit})`, { kind: 'chakra', id: c.id, aspect: Object.keys(c.aspects)[0] }, c.color]));
-  group('Endocrine glands', ORGANS.filter(o => o.gland).map(o => [o.name, { kind: 'organ', id: o.id }]));
+  group('Endocrine glands', ORGANS.filter(o => o.gland).map(o => [organName(o), { kind: 'organ', id: o.id }]));
   for (const s of systems) {
     const items = ORGANS.filter(o => o.system === s && !o.gland);
-    if (items.length) group(`${s} system`, items.map(o => [o.name, { kind: 'organ', id: o.id }]));
+    if (items.length) group(`${s} system`, items.map(o => [organName(o), { kind: 'organ', id: o.id }]));
   }
   group('Aura', AURA_LAYERS.map(L => [`${L.n}. ${L.name}`, { kind: 'aura', n: L.n }, L.color]));
   group('Deeper dimensions', [
     [HARA_LINE.name, { kind: 'hara', id: HARA_LINE.id }, HARA_LINE.color],
     ...HARA.map(x => [x.name, { kind: 'hara', id: x.id }, x.color]),
     [CORE_STAR.name, { kind: 'core', id: CORE_STAR.id }, CORE_STAR.color]]);
-  $('#search').addEventListener('input', e => {
-    const q = e.target.value.toLowerCase().trim();
-    for (const x of entries) x.b.hidden = q && !x.text.includes(q);
+  const search = $('#search');
+  function filterAtlas() {
+    const q = search.value.toLowerCase().trim();
+    for (const x of entries) {
+      if (x.organ) x.text.textContent = organName(x.organ);
+      const label = x.text.textContent.toLowerCase();
+      x.b.hidden = (x.organ && !organPresent(x.organ)) || (q && !label.includes(q));
+    }
     atlas.querySelectorAll('.agroup').forEach(g => { g.hidden = ![...g.querySelectorAll('.aitem')].some(b => !b.hidden); });
-  });
+  }
+  search.addEventListener('input', filterAtlas);
+  function syncSex() {
+    sexButtons.forEach(b => { b.disabled = false; b.classList.toggle('on', b.dataset.sex === app.sex); });
+    filterAtlas();
+  }
+  syncSex();
 
   // ---------- Right panel ----------
   const info = $('#info');
@@ -161,7 +180,7 @@ export function initUI(app) {
 
   function organLink(o, m) {
     return h('button', { class: `olink ${statusClass(m)}`, onclick: () => app.select({ kind: 'organ', id: o.id }) },
-      h('span', {}, o.name), h('small', {}, m.status));
+      h('span', {}, organName(o)), h('small', {}, m.status));
   }
   function bars(m) {
     return h('div', { class: 'bars' },
@@ -182,7 +201,7 @@ export function initUI(app) {
     if (sel.kind === 'chakra') {
       const c = chakraById(sel.id);
       const mc = metrics.cm[c.id];
-      const organs = ORGANS.filter(o => o.links.some(l => l.c === c.id));
+      const organs = ORGANS.filter(o => organPresent(o) && o.links.some(l => l.c === c.id));
       info.append(close,
         h('div', { class: 'ihead', style: `--c:${c.color}` }, h('span', { class: 'swatch' }),
           h('div', {}, h('h3', {}, `${ordinal(c.n)} chakra — ${c.name}`), h('small', {}, `${c.sanskrit} · ${c.vortices} small vortices`))),
@@ -209,8 +228,8 @@ export function initUI(app) {
       const main = chakraById(o.links[0].c);
       info.append(close,
         h('div', { class: 'ihead', style: `--c:${main.color}` }, h('span', { class: 'swatch organ' }),
-          h('div', {}, h('h3', {}, o.name), h('small', {}, `${o.system} system${o.gland ? ' · endocrine gland' : ''}`))),
-        h('p', {}, o.info),
+          h('div', {}, h('h3', {}, organName(o)), h('small', {}, `${o.system} system${o.gland ? ' · endocrine gland' : ''}`))),
+        h('p', {}, organInfo(o)),
         h('div', { class: `status ${statusClass(m)}` }, m.status),
         bars(m),
         h('h4', {}, 'Chakras that feed it'),
@@ -229,7 +248,7 @@ export function initUI(app) {
           h('li', {}, 'Nervous system'),
           h('li', {}, `Endocrine gland (${main.gland})`),
           h('li', {}, 'Blood'),
-          h('li', {}, o.name)),
+          h('li', {}, organName(o))),
         h('p', { class: 'src' }, 'Metabolic path of incoming primary energy: Brennan, Hands of Light, fig. 7-6.'));
     } else if (sel.kind === 'aura') {
       const L = AURA_LAYERS[sel.n - 1];
@@ -280,12 +299,12 @@ export function initUI(app) {
       el.querySelector('b').textContent = `${harm}%`;
       el.querySelector('i').style.width = `${harm}%`;
     });
-    const affected = ORGANS.map(o => ({ o, m: metrics.om[o.id] })).filter(x => x.m.impact > 0.12).sort((a, b) => b.m.impact - a.m.impact);
+    const affected = ORGANS.filter(organPresent).map(o => ({ o, m: metrics.om[o.id] })).filter(x => x.m.impact > 0.12).sort((a, b) => b.m.impact - a.m.impact);
     impact.replaceChildren(h('h4', {}, 'Impact on organs'),
       affected.length ? h('div', { class: 'olist' }, affected.map(x => organLink(x.o, x.m)))
         : h('p', { class: 'muted' }, 'All organs are vitalized. Unbalance a chakra to see the effect.'));
   }
 
   showInfo(null);
-  return { refresh, showInfo, syncToggles };
+  return { refresh, showInfo, syncToggles, syncSex };
 }

@@ -4,6 +4,13 @@
 import { CHAKRAS, ORGANS, PRESETS } from './data.js';
 
 export const state = structuredClone(PRESETS.balanced.state);
+
+// Which body is shown: 'M' (Z-Anatomy male) or 'F' (MPFB female).
+export const body = { sex: 'M' };
+export const organName = o => o[body.sex === 'F' ? 'female' : 'male']?.name ?? o.name;
+export const organInfo = o => o[body.sex === 'F' ? 'female' : 'male']?.info ?? o.info;
+// Organs that only exist in one body (e.g. breasts) are left out of the other.
+export const organPresent = o => !o.sex || o.sex === body.sex;
 const listeners = new Set();
 export const onChange = fn => listeners.add(fn);
 export const emit = () => listeners.forEach(fn => fn());

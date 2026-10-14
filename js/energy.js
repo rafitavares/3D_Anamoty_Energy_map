@@ -2,7 +2,7 @@
 // partículas de energia, as 7 camadas da aura, linha do hara e estrela do núcleo.
 import * as THREE from 'three';
 import { CHAKRAS, ORGANS, VPC, AURA_LAYERS, HARA, CORE_STAR } from './data.js';
-import { state } from './state.js';
+import { state, organPresent } from './state.js';
 import { bodyGeometries } from './anatomy.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -154,8 +154,9 @@ function nadiMaterial(color, dashed) {
   });
 }
 
-function buildNadis(organCenters) {
-  const group = new THREE.Group();
+// Rebuilt in place when organs move (e.g. switching to the female body).
+function buildNadis(organCenters, group = new THREE.Group()) {
+  for (const old of [...group.children]) { old.geometry.dispose(); old.material.dispose(); group.remove(old); }
   const links = [];
   for (const o of ORGANS) {
     for (const l of o.links) {
@@ -373,7 +374,7 @@ export function buildEnergy(organCenters) {
   const glow = glowTexture();
   const chakras = buildChakras(glow);
   const cparts = buildChakraParticles(chakras.items, glow);
-  const nadis = buildNadis(organCenters);
+  let nadis = buildNadis(organCenters);
   const vpc = buildVPC();
   const aura = buildAura();
   const hara = buildHara(glow);
@@ -444,6 +445,7 @@ export function buildEnergy(organCenters) {
 
     // Nadis
     for (const n of nadis.links) {
+      n.mesh.visible = organPresent(n.organ);
       const mc = cm[n.chakra.id];
       const blocked = mc.deficit > 0.5 && mc.flow < 0.2;
       n.phase += dt * (blocked ? -0.08 : 0.25 + mc.flow * 0.5);
@@ -485,5 +487,10 @@ export function buildEnergy(organCenters) {
     },
     auraLayers: aura.layers, auraUniforms: aura.uniforms,
     chakraItems: chakras.items, pickables, update,
+    setOrganCenters(centers) { nadis = buildNadis(centers, nadis.group); },
+    // Aura layers 1–3 follow the body surface.
+    setBodyGeometry(geo) {
+      for (const L of aura.layers) if (L.layer.n <= 3 && L.group.children.length === 1) L.group.children[0].geometry = geo;
+    },
   };
 }
