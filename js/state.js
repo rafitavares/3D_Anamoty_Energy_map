@@ -3,7 +3,7 @@
 // e = elipse (assimetria esquerda/direita).
 import { CHAKRAS, ORGANS, PRESETS } from './data.js';
 
-export const state = structuredClone(PRESETS.equilibrado.state);
+export const state = structuredClone(PRESETS.balanced.state);
 const listeners = new Set();
 export const onChange = fn => listeners.add(fn);
 export const emit = () => listeners.forEach(fn => fn());
@@ -28,15 +28,15 @@ export function notation({ r, e }) {
 // deficit / excess em 0..1.
 export function aspectMetrics({ r, e }) {
   let deficit = 0, excess = 0, flow = 0, label;
-  if (r === 0) { deficit = 1; label = 'Parado'; }
-  else if (r < 0) { deficit = Math.min(1, 0.45 + 0.55 * (-r / 6)); label = 'Fechado (anti-horário)'; }
+  if (r === 0) { deficit = 1; label = 'Stopped'; }
+  else if (r < 0) { deficit = Math.min(1, 0.45 + 0.55 * (-r / 6)); label = 'Closed (counterclockwise)'; }
   else {
     flow = r / 6;
-    if (r < 5) { deficit = ((5 - r) / 5) * 0.75; label = 'Hipoativo'; }
-    else if (r <= 7) label = 'Equilibrado';
-    else { excess = Math.min(1, (r - 7) / 3); label = 'Hiperativo / sobreuso'; }
+    if (r < 5) { deficit = ((5 - r) / 5) * 0.75; label = 'Underactive'; }
+    else if (r <= 7) label = 'Balanced';
+    else { excess = Math.min(1, (r - 7) / 3); label = 'Overactive / overused'; }
   }
-  if (Math.abs(e) >= 0.15) label += e > 0 ? ' · elipse à direita (yang)' : ' · elipse à esquerda (yin)';
+  if (Math.abs(e) >= 0.15) label += e > 0 ? ' · ellipse to the right (yang)' : ' · ellipse to the left (yin)';
   return { deficit, excess, flow, label, e };
 }
 
@@ -60,9 +60,9 @@ export function organMetrics(o, cm) {
     const k = e * sideSign * 0.45;
     if (k > 0) excess = Math.min(1, excess + k); else deficit = Math.min(1, deficit - k);
   }
-  let status = 'Vitalizado';
-  if (excess > 0.25 && excess >= deficit) status = excess > 0.6 ? 'Sobrecarregado' : 'Levemente sobrecarregado';
-  else if (deficit > 0.15) status = deficit > 0.55 ? 'Desvitalizado / estagnado' : 'Levemente desvitalizado';
+  let status = 'Vitalized';
+  if (excess > 0.25 && excess >= deficit) status = excess > 0.6 ? 'Overloaded' : 'Slightly overloaded';
+  else if (deficit > 0.15) status = deficit > 0.55 ? 'Devitalized / stagnant' : 'Slightly devitalized';
   return { deficit, excess, status, impact: Math.max(deficit, excess) };
 }
 
@@ -71,7 +71,7 @@ export function computeAll() {
   for (const c of CHAKRAS) cm[c.id] = chakraMetrics(c);
   const om = {};
   for (const o of ORGANS) om[o.id] = organMetrics(o, cm);
-  // "Para haver saúde, todos os chakras devem ter mais ou menos o mesmo tamanho."
+  // "For health, all chakras should be about the same size." (Brennan)
   const sizes = Object.values(state).map(s => (s.r > 0 ? s.r : 0));
   const mean = sizes.reduce((a, b) => a + b, 0) / sizes.length;
   const sd = Math.sqrt(sizes.reduce((a, b) => a + (b - mean) ** 2, 0) / sizes.length);

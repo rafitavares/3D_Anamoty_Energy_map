@@ -15,9 +15,10 @@ const h = (tag, attrs = {}, ...kids) => {
 const chakraById = id => CHAKRAS.find(c => c.id === id);
 const pct = x => `${Math.round(x * 100)}%`;
 const statusClass = m => m.excess > 0.25 && m.excess >= m.deficit ? 'hot' : m.deficit > 0.15 ? 'cold' : 'ok';
+const ordinal = n => `${n}${['th', 'st', 'nd', 'rd'][n < 4 ? n : 0]}`;
 
 export function initUI(app) {
-  // ---------- Abas ----------
+  // ---------- Tabs ----------
   document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
     document.querySelectorAll('.tab').forEach(t => t.hidden = t.id !== `tab-${b.dataset.tab}`);
@@ -25,11 +26,11 @@ export function initUI(app) {
   $('#menu').addEventListener('click', () => document.body.classList.toggle('show-left'));
   $('#infobtn').addEventListener('click', () => document.body.classList.toggle('show-right'));
 
-  // ---------- Presets e vistas ----------
+  // ---------- Scenarios and views ----------
   const preset = $('#preset');
-  preset.append(h('option', { value: '' }, 'Cenários de desequilíbrio…'));
+  preset.append(h('option', { value: '' }, 'Imbalance scenarios…'));
   for (const [k, p] of Object.entries(PRESETS)) preset.append(h('option', { value: k }, p.label));
-  preset.append(h('option', { value: '__random' }, 'Aleatório'));
+  preset.append(h('option', { value: '__random' }, 'Random'));
   preset.addEventListener('change', () => {
     const v = preset.value;
     if (v === '__random') {
@@ -45,7 +46,7 @@ export function initUI(app) {
   });
   document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => app.view(b.dataset.view)));
 
-  // ---------- Aba Chakras ----------
+  // ---------- Chakras tab ----------
   const list = $('#chakra-list');
   const rows = {};
   for (const c of [...CHAKRAS].reverse()) {
@@ -56,28 +57,28 @@ export function initUI(app) {
       const key = `${c.id}.${a}`;
       const badge = h('span', { class: 'badge' });
       const lab = h('div', { class: 'alabel' });
-      const r = h('input', { type: 'range', min: -10, max: 10, step: 1, class: 'r', 'aria-label': `Abertura ${asp.code}` });
-      const e = h('input', { type: 'range', min: -1, max: 1, step: 0.1, class: 'e', 'aria-label': `Elipse ${asp.code}` });
+      const r = h('input', { type: 'range', min: -10, max: 10, step: 1, class: 'r', 'aria-label': `Opening ${asp.code}` });
+      const e = h('input', { type: 'range', min: -1, max: 1, step: 0.1, class: 'e', 'aria-label': `Ellipse ${asp.code}` });
       r.addEventListener('input', () => setAspect(key, { r: +r.value }));
       e.addEventListener('input', () => setAspect(key, { e: +e.value }));
       const quick = (txt, val, title) => h('button', { title, onclick: () => setAspect(key, val) }, txt);
       card.append(h('div', { class: 'aspect' },
         h('div', { class: 'arow' }, h('span', { class: 'code' }, asp.code), h('span', { class: 'aname' }, asp.name), badge),
         r,
-        h('div', { class: 'scale' }, h('span', {}, '↺ fechado'), h('span', {}, 'parado'), h('span', {}, 'aberto ↻')),
-        h('div', { class: 'erow' }, h('span', {}, 'yin E'), e, h('span', {}, 'D yang')),
+        h('div', { class: 'scale' }, h('span', {}, '↺ closed'), h('span', {}, 'stopped'), h('span', {}, 'open ↻')),
+        h('div', { class: 'erow' }, h('span', {}, 'yin L'), e, h('span', {}, 'R yang')),
         lab,
         h('div', { class: 'quick' },
-          quick('Equilibrar', { r: 6, e: 0 }, 'C6 — aberto e equilibrado'),
-          quick('Fechar', { r: -6, e: 0 }, 'CC6 — giro anti-horário'),
-          quick('Parar', { r: 0, e: 0 }, 'S — sem movimento'),
-          quick('Hiper', { r: 10, e: 0 }, 'C10 — sobreuso'))));
+          quick('Balance', { r: 6, e: 0 }, 'C6 — open and balanced'),
+          quick('Close', { r: -6, e: 0 }, 'CC6 — counterclockwise spin'),
+          quick('Stop', { r: 0, e: 0 }, 'S — no movement'),
+          quick('Overactive', { r: 10, e: 0 }, 'C10 — overuse'))));
       rows[key] = { r, e, badge, lab };
     }
     list.append(card);
   }
 
-  // ---------- Aba Camadas ----------
+  // ---------- Layers tab ----------
   const layers = $('#layers');
   const toggles = [];
   const toggle = (label, get, set) => {
@@ -94,36 +95,37 @@ export function initUI(app) {
   const vis = k => [() => app.isVisible(k), v => app.setVisible(k, v)];
   const systems = [...new Set(ORGANS.map(o => o.system))];
   layers.append(
-    h('h4', {}, 'Corpo físico'),
-    toggle('Pele (silhueta)', ...vis('skin')),
-    slider('Opacidade da pele', 0, 1.5, 0.05, 0.55, app.setSkinOpacity),
-    toggle('Órgãos', ...vis('organs')),
-    (() => { let on = false; return toggle('Somente glândulas endócrinas', () => on, v => { on = v; app.setGlandsOnly(v); }); })(),
-    h('details', {}, h('summary', {}, 'Sistemas'),
+    h('h4', {}, 'Physical body'),
+    toggle('Skin (silhouette)', ...vis('skin')),
+    slider('Skin opacity', 0, 1.5, 0.05, app.skinOpacity, app.setSkinOpacity),
+    toggle('Organs', ...vis('organs')),
+    app.hasRealModels ? toggle('Skeleton', ...vis('skeleton')) : null,
+    (() => { let on = false; return toggle('Endocrine glands only', () => on, v => { on = v; app.setGlandsOnly(v); }); })(),
+    h('details', {}, h('summary', {}, 'Systems'),
       ...systems.map(s => { let on = true; return toggle(s, () => on, v => { on = v; app.setSystem(s, v); }); })),
-    h('h4', {}, 'Corpo energético'),
-    toggle('Chakras (vórtices)', ...vis('chakras')),
-    toggle('Fluxo de partículas', ...vis('particles')),
-    toggle('Nadis (chakra → órgão)', ...vis('nadis')),
-    toggle('Corrente vertical de força', ...vis('vpc')),
-    toggle('Rótulos dos chakras', ...vis('labels')),
-    h('h4', {}, 'Aura — 7 camadas'),
+    h('h4', {}, 'Energy body'),
+    toggle('Chakras (vortices)', ...vis('chakras')),
+    toggle('Particle flow', ...vis('particles')),
+    toggle('Nadis (chakra → organ)', ...vis('nadis')),
+    toggle('Vertical power current', ...vis('vpc')),
+    toggle('Chakra labels', ...vis('labels')),
+    h('h4', {}, 'Aura — 7 layers'),
     h('div', { class: 'btnrow' },
-      h('button', { onclick: () => { AURA_LAYERS.forEach(L => app.setAuraLayer(L.n, true)); } }, 'Todas'),
-      h('button', { onclick: () => { AURA_LAYERS.forEach(L => app.setAuraLayer(L.n, false)); } }, 'Nenhuma')),
+      h('button', { onclick: () => { AURA_LAYERS.forEach(L => app.setAuraLayer(L.n, true)); } }, 'All'),
+      h('button', { onclick: () => { AURA_LAYERS.forEach(L => app.setAuraLayer(L.n, false)); } }, 'None')),
     ...AURA_LAYERS.map(L => toggle(`${L.n}. ${L.name}`, () => app.isAuraLayer(L.n), v => app.setAuraLayer(L.n, v))),
-    slider('Intensidade da aura', 0, 2, 0.05, 1, app.setAuraOpacity),
-    h('h4', {}, 'Dimensões profundas'),
-    toggle('Linha do Hara', ...vis('hara')),
-    toggle('Estrela do Núcleo', ...vis('core')),
-    h('h4', {}, 'Cena'),
-    toggle('Chão', ...vis('floor')),
-    slider('Velocidade da animação', 0, 3, 0.1, 1, app.setSpeed),
+    slider('Aura intensity', 0, 2, 0.05, 1, app.setAuraOpacity),
+    h('h4', {}, 'Deeper dimensions'),
+    toggle('Hara line', ...vis('hara')),
+    toggle('Core Star', ...vis('core')),
+    h('h4', {}, 'Scene'),
+    toggle('Floor', ...vis('floor')),
+    slider('Animation speed', 0, 3, 0.1, 1, app.setSpeed),
   );
   const syncToggles = () => toggles.forEach(f => f());
   syncToggles();
 
-  // ---------- Aba Atlas ----------
+  // ---------- Atlas tab ----------
   const atlas = $('#atlas-list');
   const entries = [];
   const group = (title, items) => {
@@ -137,20 +139,20 @@ export function initUI(app) {
     atlas.append(g);
   };
   group('Chakras', CHAKRAS.map(c => [`${c.n}. ${c.name} (${c.sanskrit})`, { kind: 'chakra', id: c.id, aspect: Object.keys(c.aspects)[0] }, c.color]));
-  group('Glândulas endócrinas', ORGANS.filter(o => o.gland).map(o => [o.name, { kind: 'organ', id: o.id }]));
+  group('Endocrine glands', ORGANS.filter(o => o.gland).map(o => [o.name, { kind: 'organ', id: o.id }]));
   for (const s of systems) {
     const items = ORGANS.filter(o => o.system === s && !o.gland);
-    if (items.length) group(`Sistema ${s.toLowerCase()}`, items.map(o => [o.name, { kind: 'organ', id: o.id }]));
+    if (items.length) group(`${s} system`, items.map(o => [o.name, { kind: 'organ', id: o.id }]));
   }
   group('Aura', AURA_LAYERS.map(L => [`${L.n}. ${L.name}`, { kind: 'aura', n: L.n }, L.color]));
-  group('Dimensões profundas', [...HARA.map(x => [x.name, { kind: 'hara', id: x.id }, '#ffc85a']), ['Estrela do Núcleo', { kind: 'core', id: 'core' }, '#ffffff']]);
+  group('Deeper dimensions', [...HARA.map(x => [x.name, { kind: 'hara', id: x.id }, '#ffc85a']), ['Core Star', { kind: 'core', id: 'core' }, '#ffffff']]);
   $('#search').addEventListener('input', e => {
     const q = e.target.value.toLowerCase().trim();
     for (const x of entries) x.b.hidden = q && !x.text.includes(q);
     atlas.querySelectorAll('.agroup').forEach(g => { g.hidden = ![...g.querySelectorAll('.aitem')].some(b => !b.hidden); });
   });
 
-  // ---------- Painel direito ----------
+  // ---------- Right panel ----------
   const info = $('#info');
   const impact = $('#impact');
 
@@ -160,18 +162,18 @@ export function initUI(app) {
   }
   function bars(m) {
     return h('div', { class: 'bars' },
-      h('div', { class: 'bar cold' }, h('i', { style: `width:${pct(m.deficit)}` }), h('span', {}, `Deficiência ${pct(m.deficit)}`)),
-      h('div', { class: 'bar hot' }, h('i', { style: `width:${pct(m.excess)}` }), h('span', {}, `Excesso ${pct(m.excess)}`)));
+      h('div', { class: 'bar cold' }, h('i', { style: `width:${pct(m.deficit)}` }), h('span', {}, `Deficiency ${pct(m.deficit)}`)),
+      h('div', { class: 'bar hot' }, h('i', { style: `width:${pct(m.excess)}` }), h('span', {}, `Excess ${pct(m.excess)}`)));
   }
 
   function showInfo(sel, metrics) {
     info.replaceChildren();
-    const close = h('button', { class: 'close', onclick: () => app.select(null), title: 'Fechar' }, '×');
+    const close = h('button', { class: 'close', onclick: () => app.select(null), title: 'Close' }, '×');
     if (!sel) {
       info.append(h('div', { class: 'empty' },
         h('h3', {}, 'Explore'),
-        h('p', {}, 'Clique em um órgão, chakra ou ponto de luz no modelo 3D, ou use a aba Atlas.'),
-        h('p', {}, 'Na aba Chakras, mova os controles para abrir, fechar, parar ou sobrecarregar cada vórtice e veja como os órgãos, os nadis e a aura respondem.')));
+        h('p', {}, 'Click an organ, chakra or point of light in the 3D model, or use the Atlas tab.'),
+        h('p', {}, 'In the Chakras tab, move the controls to open, close, stop or overload each vortex and watch how the organs, nadis and aura respond.')));
       return;
     }
     if (sel.kind === 'chakra') {
@@ -180,77 +182,77 @@ export function initUI(app) {
       const organs = ORGANS.filter(o => o.links.some(l => l.c === c.id));
       info.append(close,
         h('div', { class: 'ihead', style: `--c:${c.color}` }, h('span', { class: 'swatch' }),
-          h('div', {}, h('h3', {}, `${c.n}º chakra — ${c.name}`), h('small', {}, `${c.sanskrit} · ${c.vortices} pequenos vórtices`))),
+          h('div', {}, h('h3', {}, `${ordinal(c.n)} chakra — ${c.name}`), h('small', {}, `${c.sanskrit} · ${c.vortices} small vortices`))),
         h('dl', {},
-          h('dt', {}, 'Glândula'), h('dd', {}, c.gland),
-          h('dt', {}, 'Governa'), h('dd', {}, c.governs)),
+          h('dt', {}, 'Gland'), h('dd', {}, c.gland),
+          h('dt', {}, 'Governs'), h('dd', {}, c.governs)),
         ...Object.entries(c.aspects).map(([a, asp]) => {
           const s = state[`${c.id}.${a}`];
           const m = aspectMetrics(s);
           return h('div', { class: `asp ${statusClass(m)}` },
             h('div', { class: 'arow' }, h('span', { class: 'code' }, asp.code), h('b', {}, asp.name),
               h('span', { class: 'badge' }, notation(s))),
-            h('p', {}, h('em', {}, `Centro de ${asp.group.toLowerCase()}: `), asp.fn),
+            h('p', {}, h('em', {}, `${asp.group} center: `), asp.fn),
             h('small', {}, m.label));
         }),
         bars(mc),
-        h('p', { class: 'state-txt' }, mc.excess > 0.25 ? `Em excesso: ${c.excess}` : mc.deficit > 0.15 ? `Em deficiência: ${c.deficit}` : `Equilibrado: ${c.balanced}`),
-        h('h4', {}, 'Órgãos e glândulas conectados'),
+        h('p', { class: 'state-txt' }, mc.excess > 0.25 ? `In excess: ${c.excess}` : mc.deficit > 0.15 ? `Deficient: ${c.deficit}` : `Balanced: ${c.balanced}`),
+        h('h4', {}, 'Connected organs and glands'),
         h('div', { class: 'olist' }, organs.map(o => organLink(o, metrics.om[o.id]))),
-        h('p', { class: 'src' }, 'Fonte: B. Brennan, Mãos de Luz, fig. 7-5 e 9-1.'));
+        h('p', { class: 'src' }, 'Source: B. Brennan, Hands of Light, fig. 7-5 and 9-1.'));
     } else if (sel.kind === 'organ') {
       const o = ORGANS.find(x => x.id === sel.id);
       const m = metrics.om[o.id];
       const main = chakraById(o.links[0].c);
       info.append(close,
         h('div', { class: 'ihead', style: `--c:${main.color}` }, h('span', { class: 'swatch organ' }),
-          h('div', {}, h('h3', {}, o.name), h('small', {}, `Sistema ${o.system.toLowerCase()}${o.gland ? ' · glândula endócrina' : ''}`))),
+          h('div', {}, h('h3', {}, o.name), h('small', {}, `${o.system} system${o.gland ? ' · endocrine gland' : ''}`))),
         h('p', {}, o.info),
         h('div', { class: `status ${statusClass(m)}` }, m.status),
         bars(m),
-        h('h4', {}, 'Chakras que o nutrem'),
+        h('h4', {}, 'Chakras that feed it'),
         h('div', { class: 'olist' }, o.links.map(l => {
           const c = chakraById(l.c);
           const cm = metrics.cm[c.id];
           return h('button', { class: `olink ${statusClass(cm)}`, style: `--c:${c.color}`, onclick: () => app.select({ kind: 'chakra', id: c.id, aspect: Object.keys(c.aspects)[0] }) },
-            h('span', {}, h('i', { class: 'dot' }), `${c.n}º ${c.name}`),
-            h('small', {}, `${l.source === 'complementar' ? 'complementar' : 'Brennan'} · peso ${l.w}`));
+            h('span', {}, h('i', { class: 'dot' }), `${ordinal(c.n)} ${c.name}`),
+            h('small', {}, `${l.source === 'complementary' ? 'complementary' : 'Brennan'} · weight ${l.w}`));
         })),
-        h('h4', {}, 'Caminho da energia'),
+        h('h4', {}, 'Energy pathway'),
         h('ol', { class: 'path' },
-          h('li', {}, 'Campo de energia universal'),
-          h('li', {}, `Vórtice do ${main.n}º chakra (${main.name})`),
-          h('li', {}, 'Nadis — rios de energia'),
-          h('li', {}, 'Sistema nervoso'),
-          h('li', {}, `Glândula endócrina (${main.gland})`),
-          h('li', {}, 'Sangue'),
+          h('li', {}, 'Universal energy field'),
+          h('li', {}, `Vortex of the ${ordinal(main.n)} chakra (${main.name})`),
+          h('li', {}, 'Nadis — rivers of energy'),
+          h('li', {}, 'Nervous system'),
+          h('li', {}, `Endocrine gland (${main.gland})`),
+          h('li', {}, 'Blood'),
           h('li', {}, o.name)),
-        h('p', { class: 'src' }, 'Caminho metabólico da energia primária: Brennan, Mãos de Luz, fig. 7-6.'));
+        h('p', { class: 'src' }, 'Metabolic path of incoming primary energy: Brennan, Hands of Light, fig. 7-6.'));
     } else if (sel.kind === 'aura') {
       const L = AURA_LAYERS[sel.n - 1];
       info.append(close,
         h('div', { class: 'ihead', style: `--c:${L.color}` }, h('span', { class: 'swatch' }),
-          h('div', {}, h('h3', {}, `${L.n}ª camada — ${L.name}`), h('small', {}, `Estende-se ${L.dist} além do corpo`))),
+          h('div', {}, h('h3', {}, `Layer ${L.n} — ${L.name}`), h('small', {}, `Extends ${L.dist} from the body`))),
         h('p', {}, L.info),
-        h('p', { class: 'muted' }, sel.n <= 3 ? 'Camadas ímpares (1, 3, 5, 7) são estruturadas; as pares (2, 4, 6) são fluidas. As três primeiras se relacionam ao plano físico.'
-          : sel.n === 4 ? 'O nível astral é a ponte entre o mundo físico e o espiritual.'
-          : 'As camadas 5 a 7 formam o plano espiritual — molde, sentimento e mente espirituais.'),
-        h('p', { class: 'muted' }, 'Chakras fechados ou parados aparecem como manchas escuras na aura na altura correspondente; chakras em excesso aparecem como clarões.'),
-        h('p', { class: 'src' }, 'Fonte: B. Brennan, Mãos de Luz, cap. 7.'));
+        h('p', { class: 'muted' }, sel.n <= 3 ? 'Odd layers (1, 3, 5, 7) are structured; even layers (2, 4, 6) are fluid. The first three relate to the physical plane.'
+          : sel.n === 4 ? 'The astral level is the bridge between the physical and spiritual worlds.'
+          : 'Layers 5 to 7 form the spiritual plane — spiritual template, feeling and mind.'),
+        h('p', { class: 'muted' }, 'Closed or stopped chakras show up as dark patches in the aura at the matching height; overactive chakras show up as flares.'),
+        h('p', { class: 'src' }, 'Source: B. Brennan, Hands of Light, ch. 7.'));
     } else if (sel.kind === 'hara') {
       const x = HARA.find(y => y.id === sel.id);
       info.append(close,
         h('div', { class: 'ihead', style: '--c:#ffc85a' }, h('span', { class: 'swatch' }),
-          h('div', {}, h('h3', {}, x.name), h('small', {}, 'Dimensão do Hara — intenção'))),
+          h('div', {}, h('h3', {}, x.name), h('small', {}, 'Haric dimension — intention'))),
         h('p', {}, x.info),
-        h('p', { class: 'muted' }, 'A linha do hara conecta o ponto ID, a sede da alma e o tan tien, e desce até o centro da Terra. Está abaixo da aura e corresponde à intencionalidade.'),
-        h('p', { class: 'src' }, 'Fonte: B. Brennan, Luz Emergente.'));
+        h('p', { class: 'muted' }, 'The hara line connects the ID point, the soul seat and the tan tien, and reaches down to the core of the Earth. It lies beneath the aura and corresponds to intentionality.'),
+        h('p', { class: 'src' }, 'Source: B. Brennan, Light Emerging.'));
     } else if (sel.kind === 'core') {
       info.append(close,
         h('div', { class: 'ihead', style: '--c:#ffffff' }, h('span', { class: 'swatch' }),
-          h('div', {}, h('h3', {}, 'Estrela do Núcleo'), h('small', {}, 'Dimensão da essência'))),
+          h('div', {}, h('h3', {}, 'Core Star'), h('small', {}, 'Core essence dimension'))),
         h('p', {}, CORE_STAR.info),
-        h('p', { class: 'src' }, 'Fonte: B. Brennan, Luz Emergente.'));
+        h('p', { class: 'src' }, 'Source: B. Brennan, Light Emerging.'));
     }
     document.body.classList.add('show-right');
   }
@@ -270,9 +272,9 @@ export function initUI(app) {
       el.querySelector('i').style.width = `${harm}%`;
     });
     const affected = ORGANS.map(o => ({ o, m: metrics.om[o.id] })).filter(x => x.m.impact > 0.12).sort((a, b) => b.m.impact - a.m.impact);
-    impact.replaceChildren(h('h4', {}, 'Impacto nos órgãos'),
+    impact.replaceChildren(h('h4', {}, 'Impact on organs'),
       affected.length ? h('div', { class: 'olist' }, affected.map(x => organLink(x.o, x.m)))
-        : h('p', { class: 'muted' }, 'Todos os órgãos estão vitalizados. Desequilibre um chakra para ver o efeito.'));
+        : h('p', { class: 'muted' }, 'All organs are vitalized. Unbalance a chakra to see the effect.'));
   }
 
   showInfo(null);

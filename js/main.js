@@ -3,7 +3,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { CHAKRAS, ORGANS, HARA, CORE_STAR, AURA_LAYERS, PRESETS } from './data.js';
 import { computeAll, onChange, loadState } from './state.js';
-import { buildBody, buildOrgans } from './anatomy.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { buildBody, buildOrgans, loadRealAnatomy, skeletonMesh } from './anatomy.js';
 import { buildEnergy } from './energy.js';
 import { initUI } from './ui.js';
 
@@ -24,16 +25,40 @@ controls.target.set(0, 1.12, 0);
 controls.enableDamping = true;
 controls.minDistance = 0.25; controls.maxDistance = 10;
 
-scene.add(new THREE.AmbientLight('#b8c4ff', 0.9));
-const key = new THREE.DirectionalLight('#ffffff', 1.6); key.position.set(1.5, 3, 2.5); scene.add(key);
+scene.add(new THREE.AmbientLight('#b8c4ff', 0.5));
+const key = new THREE.DirectionalLight('#fff4ea', 2.2); key.position.set(1.5, 3, 2.5); scene.add(key);
+const fill = new THREE.DirectionalLight('#cfd8ff', 0.8); fill.position.set(-2, 1, 2); scene.add(fill);
 const rim = new THREE.DirectionalLight('#9a7bff', 1.0); rim.position.set(-2, 1.5, -2.5); scene.add(rim);
+// Reflexos de estúdio para o aspecto úmido dos tecidos
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.6;
 
 const floor = new THREE.PolarGridHelper(1.4, 12, 6, 64, '#3b4a7a', '#26304f');
 floor.material.transparent = true; floor.material.opacity = 0.5;
 scene.add(floor);
 
+// Modelos anatômicos reais; se falharem, o atlas usa as formas simples.
+const loading = document.getElementById('loading');
+let real = null;
+try {
+  real = await loadRealAnatomy(e => {
+    if (e.total) loading.querySelector('b').textContent = `${Math.round((e.loaded / e.total) * 100)}%`;
+  });
+} catch (err) {
+  console.warn('Real anatomy models unavailable, using simple shapes.', err);
+}
+loading.hidden = true;
+
 const body = buildBody();
-const organs = buildOrgans();
+const organs = buildOrgans(real);
+let skeleton = null, skeletonLoading = false;
+function setSkeleton(v) {
+  if (skeleton) { skeleton.visible = v; return; }
+  if (!v || !real || skeletonLoading) return;
+  skeletonLoading = true;
+  real.skeleton().then(geo => { skeleton = skeletonMesh(geo); scene.add(skeleton); ui.syncToggles(); });
+}
 const energy = buildEnergy(organs.centers);
 scene.add(organs.group, body.group);
 for (const g of Object.values(energy.groups)) scene.add(g);
@@ -68,9 +93,9 @@ function flyTo(target, distance, dirHint) {
     toT: target.clone(), toP: target.clone().add(dir.multiplyScalar(distance)) };
 }
 const VIEWS = {
-  frente: () => flyTo(new THREE.Vector3(0, 1.12, 0), 3.4, new THREE.Vector3(0, 0.03, 1)),
-  costas: () => flyTo(new THREE.Vector3(0, 1.12, 0), 3.4, new THREE.Vector3(0, 0.03, -1)),
-  lado: () => flyTo(new THREE.Vector3(0, 1.12, 0), 3.4, new THREE.Vector3(1, 0.03, 0)),
+  front: () => flyTo(new THREE.Vector3(0, 1.12, 0), 3.4, new THREE.Vector3(0, 0.03, 1)),
+  back: () => flyTo(new THREE.Vector3(0, 1.12, 0), 3.4, new THREE.Vector3(0, 0.03, -1)),
+  side: () => flyTo(new THREE.Vector3(0, 1.12, 0), 3.4, new THREE.Vector3(1, 0.03, 0)),
   aura: () => flyTo(new THREE.Vector3(0, 1.1, 0), 7.5, new THREE.Vector3(0.35, 0.12, 1)),
   hara: () => flyTo(new THREE.Vector3(0, 1.35, 0), 8, new THREE.Vector3(0.5, 0.05, 1)),
 };
@@ -87,9 +112,9 @@ function positionOf(sel) {
 }
 function nameOf(sel) {
   if (sel.kind === 'organ') return ORGANS.find(o => o.id === sel.id).name;
-  if (sel.kind === 'chakra') { const c = CHAKRAS.find(x => x.id === sel.id); return `${c.n}º ${c.name}`; }
+  if (sel.kind === 'chakra') { const c = CHAKRAS.find(x => x.id === sel.id); return `${c.name} chakra`; }
   if (sel.kind === 'hara') return HARA.find(h => h.id === sel.id).name;
-  if (sel.kind === 'core') return 'Estrela do Núcleo';
+  if (sel.kind === 'core') return 'Core Star';
   if (sel.kind === 'aura') return AURA_LAYERS[sel.n - 1].name;
   return '';
 }
@@ -125,9 +150,12 @@ const app = {
     else if (key === 'organs') organs.group.visible = v;
     else if (key === 'labels') chakraLabels.visible = v;
     else if (key === 'floor') floor.visible = v;
+    else if (key === 'skeleton') setSkeleton(v);
     else energy.groups[key].visible = v;
   },
+  hasRealModels: !!real,
   isVisible(key) {
+    if (key === 'skeleton') return !!skeleton?.visible;
     if (key === 'skin') return body.group.visible;
     if (key === 'organs') return organs.group.visible;
     if (key === 'labels') return chakraLabels.visible;
@@ -136,6 +164,7 @@ const app = {
   },
   setAuraLayer(n, v) { energy.auraLayers[n - 1].group.visible = v; ui.syncToggles(); },
   isAuraLayer: n => energy.auraLayers[n - 1].group.visible,
+  skinOpacity: body.material.uniforms.uOpacity.value,
   setSkinOpacity: v => { body.material.uniforms.uOpacity.value = v; },
   setAuraOpacity: v => { energy.auraUniforms.uOpacity.value = v; },
   setSpeed: v => { speed = v; },
@@ -243,14 +272,14 @@ renderer.setAnimationLoop(() => {
 
 window.atlas = { app, scene, camera, metrics: () => metrics };
 
-// Parâmetros de URL: ?cenario=coracao_fechado&vista=lado&aura=1,2,3&sel=organ:coracao&camadas=hara,core
+// URL parameters: ?scenario=closed_heart&view=side&aura=1,2,3&sel=organ:coracao&layers=hara,core
 const params = new URLSearchParams(location.search);
-if (PRESETS[params.get('cenario')]) loadState(PRESETS[params.get('cenario')].state);
+if (PRESETS[params.get('scenario')]) loadState(PRESETS[params.get('scenario')].state);
 const auraParam = params.get('aura') === 'all' ? '1,2,3,4,5,6,7' : params.get('aura') ?? '';
 for (const n of auraParam.split(',').filter(Boolean)) app.setAuraLayer(+n, true);
-for (const k of (params.get('camadas') ?? '').split(',').filter(Boolean)) { app.setVisible(k, true); ui.syncToggles(); }
+for (const k of (params.get('layers') ?? '').split(',').filter(Boolean)) { app.setVisible(k, true); ui.syncToggles(); }
 if (params.get('sel')) {
   const [kind, id, aspect] = params.get('sel').split(':');
-  app.select(kind === 'aura' ? { kind, n: +id } : { kind, id, aspect }, { fly: !params.get('vista') });
+  app.select(kind === 'aura' ? { kind, n: +id } : { kind, id, aspect }, { fly: !params.get('view') });
 }
-if (params.get('vista')) app.view(params.get('vista'));
+if (params.get('view')) app.view(params.get('view'));

@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Atlas Energético 3D</title>
-  <meta name="description" content="Atlas 3D interativo de anatomia física e energética: órgãos, glândulas, chakras, aura e campos de energia.">
+  <title>Energy Anatomy Atlas</title>
+  <meta name="description" content="Interactive 3D atlas of physical and energetic anatomy: organs, glands, chakras, aura and energy fields.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
@@ -19,51 +19,53 @@
 </head>
 <body>
   <header>
-    <button id="menu" class="icon" aria-label="Painel">☰</button>
-    <h1>Atlas Energético <span>3D</span></h1>
-    <select id="preset" aria-label="Cenários"></select>
+    <button id="menu" class="icon" aria-label="Panel">☰</button>
+    <h1>Energy Anatomy <span>Atlas 3D</span></h1>
+    <select id="preset" aria-label="Scenarios"></select>
     <nav class="views">
-      <button data-view="frente">Frente</button>
-      <button data-view="costas">Costas</button>
-      <button data-view="lado">Lado</button>
+      <button data-view="front">Front</button>
+      <button data-view="back">Back</button>
+      <button data-view="side">Side</button>
       <button data-view="aura">Aura</button>
       <button data-view="hara">Hara</button>
     </nav>
-    <div class="harmony" title="Harmonia do campo: chakras de tamanho semelhante, todos girando no sentido horário">
-      <span>Harmonia</span><div class="meter"><i></i></div><b>–</b>
+    <div class="harmony" title="Field harmony: chakras of similar size, all spinning clockwise">
+      <span>Harmony</span><div class="meter"><i></i></div><b>–</b>
     </div>
-    <button id="infobtn" class="icon" aria-label="Informações">ⓘ</button>
+    <button id="infobtn" class="icon" aria-label="Info">ⓘ</button>
   </header>
 
   <aside id="left">
     <div class="tabs">
       <button data-tab="chakras" class="on">Chakras</button>
-      <button data-tab="layers">Camadas</button>
+      <button data-tab="layers">Layers</button>
       <button data-tab="atlas">Atlas</button>
     </div>
     <section class="tab" id="tab-chakras">
-      <p class="hint">Leitura como o pêndulo de Brennan: o número é o diâmetro do giro (polegadas). <b>C6</b> = horário, aberto e equilibrado · <b>CC</b> = anti-horário (fechado) · <b>S</b> = parado · <b>E</b> = elipse (desequilíbrio esquerda/direita).</p>
+      <p class="hint">Read like Brennan’s pendulum: the number is the diameter of the spin (inches). <b>C6</b> = clockwise, open and balanced · <b>CC</b> = counterclockwise (closed) · <b>S</b> = stopped · <b>E</b> = ellipse (left/right imbalance).</p>
       <div id="chakra-list"></div>
     </section>
     <section class="tab" id="tab-layers" hidden><div id="layers"></div></section>
     <section class="tab" id="tab-atlas" hidden>
-      <input id="search" type="search" placeholder="Buscar estrutura…">
+      <input id="search" type="search" placeholder="Search structures…">
       <div id="atlas-list"></div>
     </section>
   </aside>
 
   <main id="viewport">
+    <div id="loading">Loading anatomy models… <b>0%</b></div>
     <div class="legend">
-      <span><i class="ok"></i>vitalizado</span>
-      <span><i class="cold"></i>desvitalizado / estagnado</span>
-      <span><i class="hot"></i>sobrecarregado</span>
+      <span><i class="ok"></i>vitalized</span>
+      <span><i class="cold"></i>devitalized / stagnant</span>
+      <span><i class="hot"></i>overloaded</span>
     </div>
   </main>
 
   <aside id="right">
     <div id="info"></div>
     <div id="impact"></div>
-    <p class="disclaimer">Ferramenta educacional baseada no modelo de Barbara Brennan. Não é diagnóstico nem substitui avaliação médica.</p>
+    <p class="disclaimer">Educational tool based on Barbara Brennan’s model. Not a diagnosis and not a substitute for medical care.<br>
+      Anatomy models: <a href="https://www.z-anatomy.com" target="_blank" rel="noopener">Z-Anatomy</a> (CC BY-SA 4.0), derived from <a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/" target="_blank" rel="noopener">BodyParts3D</a> © DBCLS (CC BY-SA 2.1 JP).</p>
   </aside>
 
   <div id="tooltip" hidden></div>

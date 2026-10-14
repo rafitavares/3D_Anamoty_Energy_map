@@ -91,6 +91,9 @@ details .tog { padding-left: 14px; }
 .labels { position: absolute; inset: 0; pointer-events: none; }
 .clabel { font-size: 11px; padding: 2px 7px; border-radius: 20px; background: rgba(8,10,22,.6); border: 1px solid var(--c); color: var(--text); white-space: nowrap; transform: translateX(50%); }
 .slabel { font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 6px; background: rgba(155,140,255,.92); color: #0b0d1c; white-space: nowrap; transform: translateY(-22px); }
+#loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); z-index: 2; pointer-events: none; }
+#loading[hidden] { display: none; }
+.disclaimer a { color: var(--muted); }
 .legend { position: absolute; left: 12px; bottom: 10px; display: flex; gap: 12px; color: var(--muted); font-size: 11px; z-index: 1; pointer-events: none; flex-wrap: wrap; }
 .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--s); margin-right: 5px; vertical-align: -1px; }
 #tooltip { position: fixed; z-index: 20; pointer-events: none; background: rgba(10,12,28,.95); border: 1px solid var(--line); border-radius: 6px; padding: 5px 9px; font-size: 12px; max-width: 320px; }

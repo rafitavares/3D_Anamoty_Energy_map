@@ -37,8 +37,12 @@ function limb(a, b, r, mat) {
   return m;
 }
 
-// Geometrias do corpo, reutilizadas pelas camadas 1 e 2 da aura.
+// Silhueta real (musculatura superficial do Z-Anatomy), quando carregada.
+let silhouette = null;
+
+// Geometrias do corpo, reutilizadas pelas camadas 1 a 3 da aura.
 export function bodyGeometries() {
+  if (silhouette) return [{ geo: silhouette, pos: V(0, 0, 0), quat: new THREE.Quaternion(), scale: V(1, 1, 1) }];
   const parts = [];
   const add = (geo, pos, quat, scale) => parts.push({ geo, pos, quat, scale });
   const capsule = (a, b, r) => {
@@ -229,23 +233,64 @@ const BUILDERS = {
     V(0, 1.47, -0.068), V(0, 1.58, -0.04), V(0, 1.62, -0.035)], 0.005, m, 80),
 };
 
+// Cores próximas do tecido real.
 export const ORGAN_COLORS = {
-  cerebro_sup: '#f4a7b9', cerebro_inf: '#e889a2', pineal: '#c7a6ff', hipofise: '#9d8cff',
-  olho_d: '#ffffff', olho_e: '#ffffff', ouvidos: '#f0b59a', nariz: '#f0b59a',
-  tireoide: '#6fb0ff', laringe: '#a8d4ff', pulmao_e: '#ff9fb0', pulmao_d: '#ff9fb0', timo: '#7ff0a8',
-  coracao: '#e2263c', circulacao: '#d81b33', vago: '#ffe27a',
-  estomago: '#f6b26b', figado: '#8c2d2d', vesicula: '#3fa34d', pancreas: '#ffd966', baco: '#8e3a6b',
-  intestinos: '#f2a6a0', rim_e: '#a63d40', rim_d: '#a63d40', suprarrenais: '#ffcf33', bexiga: '#f5d76e',
-  gonadas: '#ff9a3d', reprodutor: '#ff7f6e', coluna: '#efe9dc', medula: '#fff4a8',
+  cerebro_sup: '#e7b9b2', cerebro_inf: '#d9998f', pineal: '#c98f86', hipofise: '#d0857a',
+  olho_d: '#f3efe6', olho_e: '#f3efe6', ouvidos: '#e9cdb8', nariz: '#dc8f86',
+  tireoide: '#b5513f', laringe: '#e3d2c4', pulmao_e: '#e6a3a3', pulmao_d: '#e6a3a3', timo: '#e9c3a6',
+  coracao: '#a3282e', circulacao: '#c41e2e', vago: '#f1dc8c',
+  estomago: '#e3a28a', figado: '#7d2e24', vesicula: '#557f3c', pancreas: '#e6c07c', baco: '#6f2a3a',
+  intestinos: '#dea08f', rim_e: '#8b3a31', rim_d: '#8b3a31', suprarrenais: '#e0a54a', bexiga: '#e6c3a2',
+  gonadas: '#e8b8a8', reprodutor: '#d98f86', coluna: '#ece3cf', medula: '#eadfc2',
 };
 
-export function buildOrgans() {
+// ---------- Modelos reais (Z-Anatomy, CC BY-SA 4.0) ----------
+// Gerados por tools/zanatomy_export.py. Cada nó do .glb tem o id do órgão.
+const DRACO_PATH = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/gltf/';
+
+function realOrganMat(color) {
+  return new THREE.MeshPhysicalMaterial({
+    color, roughness: 0.42, metalness: 0, clearcoat: 0.55, clearcoatRoughness: 0.35,
+    sheen: 0.6, sheenRoughness: 0.5, sheenColor: new THREE.Color('#ffd9d0'),
+    emissive: new THREE.Color(color), emissiveIntensity: 0.15, transparent: true, opacity: 1,
+  });
+}
+
+export async function loadRealAnatomy(onProgress) {
+  const [{ GLTFLoader }, { DRACOLoader }] = await Promise.all([
+    import('three/addons/loaders/GLTFLoader.js'), import('three/addons/loaders/DRACOLoader.js')]);
+  const draco = new DRACOLoader().setDecoderPath(DRACO_PATH);
+  const loader = new GLTFLoader().setDRACOLoader(draco);
+  const load = url => new Promise((res, rej) => loader.load(url, res, onProgress, rej));
+  const geometries = gltf => {
+    const out = {};
+    gltf.scene.traverse(o => { if (o.isMesh) out[o.name] = o.geometry; });
+    return out;
+  };
+  const [organs, body] = await Promise.all([load('models/orgaos.glb'), load('models/silhueta.glb')].map(p => p.then(geometries)));
+  silhouette = Object.values(body)[0] ?? null;
+  // Esqueleto: carregado sob demanda, quando a camada é ligada.
+  const skeleton = () => load('models/esqueleto.glb').then(g => Object.values(geometries(g))[0]);
+  return { organs, skeleton };
+}
+
+export function skeletonMesh(geo) {
+  const mat = new THREE.MeshPhysicalMaterial({
+    color: '#efe6d2', roughness: 0.55, clearcoat: 0.2, transparent: true, opacity: 0.55, depthWrite: false,
+  });
+  const m = new THREE.Mesh(geo, mat);
+  m.renderOrder = 3;
+  return m;
+}
+
+export function buildOrgans(real) {
   const group = new THREE.Group();
   const meshes = {};
   for (const id of Object.keys(BUILDERS)) {
-    const mat = organMat(ORGAN_COLORS[id]);
-    const obj = BUILDERS[id](mat);
-    obj.userData = { kind: 'organ', id, mat, base: new THREE.Color(ORGAN_COLORS[id]) };
+    const geo = real?.organs[id];
+    const mat = geo ? realOrganMat(ORGAN_COLORS[id]) : organMat(ORGAN_COLORS[id]);
+    const obj = geo ? new THREE.Mesh(geo, mat) : BUILDERS[id](mat);
+    obj.userData = { kind: 'organ', id, mat, base: new THREE.Color(ORGAN_COLORS[id]), real: !!geo };
     obj.traverse(o => { o.userData.pickId = id; o.userData.pickKind = 'organ'; });
     group.add(obj);
     meshes[id] = obj;

@@ -1,0 +1,502 @@
+{
+ "coracao": {
+  "parts": [
+   "Anterior papillary muscle of right ventricle",
+   "Anterior semilunar leaflet of pulmonary valve",
+   "Inferior leaflet of right atrioventricular valve",
+   "Inferior papillary muscle of left ventricle",
+   "Inferior papillary muscle of right ventricle",
+   "Left atrium",
+   "Left coronary leaflet",
+   "Left semilunar leaflet of pulmonary valve",
+   "Left ventricle",
+   "Non-coronary leaflet",
+   "Posterior leaflet of left atrioventricular valve",
+   "Septal papillary muscle of right ventricle",
+   "Right atrium",
+   "Right coronary leaflet",
+   "Right semilunar leaflet of pulmonary valve",
+   "Right ventricle",
+   "Septal leaflet of right atrioventricular valve"
+  ],
+  "tris_in": 113352,
+  "tris_out": 39999
+ },
+ "pulmao_e": {
+  "parts": [
+   "Inferior lobe of left lung",
+   "Superior lobe of left lung"
+  ],
+  "tris_in": 18548,
+  "tris_out": 15998
+ },
+ "pulmao_d": {
+  "parts": [
+   "Inferior lobe of right lung",
+   "Middle lobe of right lung",
+   "Superior lobe of right lung"
+  ],
+  "tris_in": 23596,
+  "tris_out": 16000
+ },
+ "figado": {
+  "parts": [
+   "Liver"
+  ],
+  "tris_in": 12270,
+  "tris_out": 12270
+ },
+ "vesicula": {
+  "parts": [
+   "Gallbladder"
+  ],
+  "tris_in": 722,
+  "tris_out": 722
+ },
+ "estomago": {
+  "parts": [
+   "Stomach"
+  ],
+  "tris_in": 9468,
+  "tris_out": 9468
+ },
+ "pancreas": {
+  "parts": [
+   "Pancreas"
+  ],
+  "tris_in": 5222,
+  "tris_out": 5222
+ },
+ "baco": {
+  "parts": [
+   "Spleen"
+  ],
+  "tris_in": 1330,
+  "tris_out": 1330
+ },
+ "rim_e": {
+  "parts": [
+   "Kidney.l",
+   "Renal pelvis.l"
+  ],
+  "tris_in": 4432,
+  "tris_out": 4432
+ },
+ "rim_d": {
+  "parts": [
+   "Kidney.r",
+   "Renal pelvis.r"
+  ],
+  "tris_in": 3584,
+  "tris_out": 3584
+ },
+ "suprarrenais": {
+  "parts": [
+   "Suprarenal gland.l",
+   "Suprarenal gland.r"
+  ],
+  "tris_in": 6290,
+  "tris_out": 6000
+ },
+ "tireoide": {
+  "parts": [
+   "Thyroid gland"
+  ],
+  "tris_in": 2600,
+  "tris_out": 2600
+ },
+ "timo": {
+  "parts": [
+   "Left lobe of thymus",
+   "Right lobe of thymus"
+  ],
+  "tris_in": 15640,
+  "tris_out": 8000
+ },
+ "laringe": {
+  "parts": [
+   "Epiglottis",
+   "Thyroid cartilage",
+   "Trachea"
+  ],
+  "tris_in": 12620,
+  "tris_out": 12620
+ },
+ "intestinos": {
+  "parts": [
+   "Ascending colon",
+   "Descending colon",
+   "Duodenum",
+   "Sigmoid colon",
+   "Transverse colon",
+   "Vermiform appendix"
+  ],
+  "tris_in": 64496,
+  "tris_out": 15999
+ },
+ "bexiga": {
+  "parts": [
+   "Urinary bladder"
+  ],
+  "tris_in": 3036,
+  "tris_out": 3036
+ },
+ "gonadas": {
+  "parts": [
+   "Testis.l",
+   "Testis.r"
+  ],
+  "tris_in": 2712,
+  "tris_out": 2712
+ },
+ "reprodutor": {
+  "parts": [
+   "Corpus cavernosum of penis",
+   "Corpus spongiosum of penis",
+   "Glans penis",
+   "Prostate",
+   "Seminal gland.l",
+   "Seminal gland.r"
+  ],
+  "tris_in": 4427,
+  "tris_out": 4427
+ },
+ "hipofise": {
+  "parts": [
+   "Adenohypophysis",
+   "Neurohypophysis"
+  ],
+  "tris_in": 1272,
+  "tris_out": 1272
+ },
+ "pineal": {
+  "parts": [
+   "Pineal gland"
+  ],
+  "tris_in": 634,
+  "tris_out": 634
+ },
+ "cerebro_sup": {
+  "parts": [
+   " Posterior transverse collateral sulcus.l",
+   "Amygdaloid body.l",
+   "Amygdaloid body.r",
+   "Angular gyrus.l",
+   "Anterior commissure",
+   "Anterior occipital sulcus*.l",
+   "Calcarine sulcus.l",
+   "Caudate nucleus.l",
+   "Caudate nucleus.r",
+   "Central sulcus.l",
+   "Cingulate gyrus (Posteroventral part*).l",
+   "Cingulate gyrus and sulcus (Middle anterior part).l",
+   "Cingulate gyrus and sulcus (Middle posterior part).l",
+   "Cingulate gyrus and sulcus (Posterior dorsal part).l",
+   "Cingulate sulcus (Marginal part*).l",
+   "Circular sulcus of insula.l",
+   "Collateral sulcus.l",
+   "Corpus callosum",
+   "Cuneus.l",
+   "Fornix.l",
+   "Fornix.r",
+   "Globus pallidus.l",
+   "Globus pallidus.r",
+   "Habenula",
+   "Hippocampal commissure",
+   "Hippocampus.l",
+   "Hippocampus.r",
+   "Hypothalamus",
+   "Inferior occipital gyrus and sulcus*.l",
+   "Inferior temporal gyrus.l",
+   "Insula (Subcentral gyrus and ant. and post. sulci*).l",
+   "Lat_Fis-ant-Horizont.l",
+   "Lat_Fis-ant-Vertical.l",
+   "Lat_Fis-post.l",
+   "Lateral geniculate body.l",
+   "Lateral geniculate body.r",
+   "Lateral occipital gyrus (Middle occipital gyrus*).l",
+   "Lateral occipitotemporal gyrus.l",
+   "Lateral ventricle.l",
+   "Lateral ventricle.r",
+   "Lentiform nucleus.l",
+   "Lentiform nucleus.r",
+   "Lingual gyrus.l",
+   "Lunate sulcus.l",
+   "Mamillary body.l",
+   "Mamillary body.r",
+   "Medial geniculate body.l",
+   "Medial geniculate body.r",
+   "Medial occipitotemporal gyrus (Parahippocampal*).l",
+   "Middle frontal gyrus.l",
+   "Middle temporal gyrus.l",
+   "Occipital pole.l",
+   "Occipitotemporal sulcus (Lateral part*).l",
+   "Optic chiasm.l",
+   "Optic chiasm.r",
+   "Optic tract.l",
+   "Optic tract.r",
+   "Orbital gyri (Frontomarginal gyrus and sulcus*).l",
+   "Orbital gyri.l",
+   "Orbital part of  inferior frontal gyrus.l",
+   "Orbital sulci (H-shaped orbital sulci*).l",
+   "Orbital sulci (Lateral Orbital sulcus*).l",
+   "Paracentral gyrus and sulcus*.l",
+   "Postcentral gyrus.l",
+   "Posterior commissure",
+   "Precentral gyrus.l",
+   "Precuneus.l",
+   "Septal nuclei",
+   "Inferior frontal sulcus.l",
+   "Inferior temporal sulcus.l",
+   "Intraparietal sulcus.l",
+   "Olfactory sulcus.l",
+   "Opercular part of inferior frontal gyrus.l",
+   "Paracentral sulcus.l",
+   "Parieto-occipital sulcus.l",
+   "Postcentral sulcus.l",
+   "Precentral sulcus (inferior part)*.l",
+   "Precentral sulcus (Superior part)*.l",
+   "Putamen.l",
+   "Putamen.r",
+   "Septum pellucidum",
+   "Straight gyrus (Gyrus rectus).l",
+   "Stria medullaris thalami.l",
+   "Stria medullaris thalami.r",
+   "Stria terminalis.l",
+   "Stria terminalis.r",
+   "Subparietal sulcus.l",
+   "Sulcus interm_prim-Jensen.l",
+   "Superior frontal gyrus.l",
+   "Superior frontal sulcus.l",
+   "Superior occipital gyri.l",
+   "Superior parietal lobule.l",
+   "Superior temporal gyrus (Lateral part).l",
+   "Superior temporal sulcus.l",
+   "Supramarginal gyrus.l",
+   "Temporal plane.l",
+   "Temporal pole.l",
+   "Thalamus.l",
+   "Thalamus.r",
+   "Third ventricle",
+   "Transverse frontopolar gyrus and sulcus*.l",
+   "Transverse occipital sulcus.l",
+   "Transverse temporal gyri.l",
+   "Triangular part of inferior frontal gyrus.l",
+   "White matter of telencephalon.l"
+  ],
+  "tris_in": 266614,
+  "tris_out": 69999
+ },
+ "cerebro_inf": {
+  "parts": [
+   "Anterior quadrangular lobule.l",
+   "Anterior quadrangular lobule.r",
+   "Aqueduct of midbrain",
+   "Biventral lobule.l",
+   "Biventral lobule.r",
+   "Central lobule",
+   "Culmen",
+   "Declive",
+   "Flocculus.l",
+   "Flocculus.r",
+   "Folium of vermis",
+   "Fourth ventricle",
+   "Gracile lobule.l",
+   "Gracile lobule.r",
+   "Inferior colliculus.l",
+   "Inferior colliculus.r",
+   "Inferior semilunar lobule.l",
+   "Inferior semilunar lobule.r",
+   "Lingula of cerebellum",
+   "Medulla oblongata.l",
+   "Midbrain.l",
+   "Midbrain.r",
+   "Nodule of vermis",
+   "Olive.l",
+   "Olive.r",
+   "Peduncle of flocculus.l",
+   "Peduncle of flocculus.r",
+   "Red nucleus.l",
+   "Red nucleus.r",
+   "Pons.l",
+   "Pons.r",
+   "Posterior quadrangular lobule.l",
+   "Posterior quadrangular lobule.r",
+   "Pyramid of medulla oblongata.l",
+   "Pyramid of medulla oblongata.r",
+   "Pyramis of vermis",
+   "Base of peduncle.l",
+   "Base of peduncle.r",
+   "Superior cerebellar peduncle.l",
+   "Superior cerebellar peduncle.r",
+   "Superior colliculus.l",
+   "Superior colliculus.r",
+   "Superior semilunar lobule.l",
+   "Superior semilunar lobule.r",
+   "Tonsil of cerebellum.l",
+   "Tonsil of cerebellum.r",
+   "Tuber of vermis",
+   "Uvula of vermis",
+   "Vestibular nuclei.l",
+   "Vestibular nuclei.r",
+   "Wing of central lobule.l",
+   "Wing of central lobule.r"
+  ],
+  "tris_in": 205601,
+  "tris_out": 30000
+ },
+ "olho_e": {
+  "parts": [
+   "Anterior chamber of eyeball.l",
+   "Anterior segment of eyeball.l",
+   "Cornea.l",
+   "Lens.l",
+   "Posterior segment of eyeball.l",
+   "Retina.l",
+   "Sclera.l",
+   "Suspensory ligament of eyeball.l",
+   "Vitreous body.l"
+  ],
+  "tris_in": 44632,
+  "tris_out": 5999
+ },
+ "olho_d": {
+  "parts": [
+   "Anterior chamber of eyeball.r",
+   "Anterior segment of eyeball.r",
+   "Cornea.r",
+   "Lens.r",
+   "Meridians of eyeball.r",
+   "Posterior segment of eyeball.r",
+   "Retina.r",
+   "Sclera.r",
+   "Suspensory ligament of eyeball.r",
+   "Vitreous body.r"
+  ],
+  "tris_in": 44632,
+  "tris_out": 5999
+ },
+ "ouvidos": {
+  "parts": [
+   "Cochlea.l",
+   "Cochlea.r",
+   "Tympanic membrane.l",
+   "Tympanic membrane.r",
+   "Vestibule.l",
+   "Vestibule.r"
+  ],
+  "tris_in": 32640,
+  "tris_out": 7999
+ },
+ "nariz": {
+  "parts": [
+   "Lateral process of nasal septal cartilage.l",
+   "Lateral process of nasal septal cartilage.r",
+   "Mucosa of nasal cavity",
+   "Nasal septal cartilage"
+  ],
+  "tris_in": 10862,
+  "tris_out": 5998
+ },
+ "coluna": {
+  "parts": [
+   "Anterior longitudinal ligament",
+   "Atlas (C1)",
+   "Axis (C2)",
+   "Coccyx",
+   "Intervertebral disc C2-C3",
+   "Intervertebral disc C3-C4",
+   "Intervertebral disc C4-C5",
+   "Intervertebral disc C5-C6",
+   "Intervertebral disc C6-C7",
+   "Intervertebral disc C7-T1",
+   "Intervertebral disc L1-L2",
+   "Intervertebral disc L2-L3",
+   "Intervertebral disc L3-L4",
+   "Intervertebral disc L4-L5",
+   "Intervertebral disc L5-S1",
+   "Intervertebral disc T1-T2",
+   "Intervertebral disc T10-T11",
+   "Intervertebral disc T11-T12",
+   "Intervertebral disc T12-L1",
+   "Intervertebral disc T2-T3",
+   "Intervertebral disc T3-T4",
+   "Intervertebral disc T4-T5",
+   "Intervertebral disc T5-T6",
+   "Intervertebral disc T6-T7",
+   "Intervertebral disc T7-T8",
+   "Intervertebral disc T8-T9",
+   "Intervertebral disc T9-T10",
+   "Ligamenta flava",
+   "Nucleus pulposus C2-C3",
+   "Nucleus pulposus C3-C4",
+   "Nucleus pulposus C4-C5",
+   "Nucleus pulposus C5-C6",
+   "Nucleus pulposus C6-C7",
+   "Nucleus pulposus C7-T1",
+   "Nucleus pulposus L1-L2",
+   "Nucleus pulposus L2-L3",
+   "Nucleus pulposus L3-L4",
+   "Nucleus pulposus L4-L5",
+   "Nucleus pulposus L5-S1",
+   "Nucleus pulposus T1-T2",
+   "Nucleus pulposus T10-T11",
+   "Nucleus pulposus T11-T12",
+   "Nucleus pulposus T12-L1",
+   "Nucleus pulposus T2-T3",
+   "Nucleus pulposus T3-T4",
+   "Nucleus pulposus T4-T5",
+   "Nucleus pulposus T5-T6",
+   "Nucleus pulposus T6-T7",
+   "Nucleus pulposus T7-T8",
+   "Nucleus pulposus T8-T9",
+   "Nucleus pulposus T9-T10",
+   "Posterior longitudinal ligament",
+   "Radiate ligament of head of rib.l",
+   "Radiate ligament of head of rib.r",
+   "Sacrococcygeal symphysis",
+   "Sacrum",
+   "Vertebra C3",
+   "Vertebra C4",
+   "Vertebra C5",
+   "Vertebra C6",
+   "Vertebra C7",
+   "Vertebra L1",
+   "Vertebra L2",
+   "Vertebra L3",
+   "Vertebra L4",
+   "Vertebra L5",
+   "Vertebra T1",
+   "Vertebra T10",
+   "Vertebra T11",
+   "Vertebra T12",
+   "Vertebra T2",
+   "Vertebra T3",
+   "Vertebra T4",
+   "Vertebra T5",
+   "Vertebra T6",
+   "Vertebra T7",
+   "Vertebra T8",
+   "Vertebra T9"
+  ],
+  "tris_in": 167247,
+  "tris_out": 60000
+ },
+ "medula": {
+  "parts": [
+   "Spinal dura"
+  ],
+  "tris_in": 35002,
+  "tris_out": 20385
+ },
+ "esqueleto": {
+  "parts": 277,
+  "tris_in": 702015,
+  "tris_out": 159999
+ },
+ "silhueta": {
+  "parts": 289,
+  "tris_in": 992715,
+  "tris_out": 90000
+ }
+}

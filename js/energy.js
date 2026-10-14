@@ -166,7 +166,7 @@ function buildNadis(organCenters) {
       const mid = start.clone().lerp(end, 0.5);
       mid.z += 0.035; mid.x *= 1.25;
       const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
-      const mat = nadiMaterial(c.color, l.source === 'complementar');
+      const mat = nadiMaterial(c.color, l.source === 'complementary');
       const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 40, 0.0022 * (0.6 + l.w * 0.5), 6, false), mat);
       mesh.renderOrder = 9;
       group.add(mesh);
@@ -229,7 +229,7 @@ const AURA_COMMON = /* glsl */`
     float n = fbm(vW*9.0 + uTime*0.15);
     col = mix(col, vec3(0.32,0.25,0.18)*(0.6+n), shadow*0.85);
     a *= 1.0 - shadow*0.35;
-    col += flare*(0.8+0.6*sin(uTime*6.0+vW.y*30.0));
+    col += flare*(0.3+0.25*sin(uTime*6.0+vW.y*30.0));
     return col;
   }
 `;
@@ -259,10 +259,10 @@ function auraMaterial(layer, uniforms, offset) {
         } else if(uMode==2){ // emocional: nuvens coloridas fluidas
           float n = fbm(vW*6.0 + vec3(0.0,uTime*0.25,0.0));
           col = hue(n*1.6 + vW.y*0.4);
-          a = pow(fres,1.4)*0.55*(0.4+n);
+          a = pow(fres,1.4)*0.35*(0.4+n);
         } else if(uMode==3){ // mental: amarelo, concentrado em cabeça e ombros
           float n = fbm(vW*4.0 + uTime*0.1);
-          a = pow(fres,1.8)*(0.15 + 0.85*smoothstep(1.05,1.6,vW.y))*(0.6+0.6*n);
+          a = pow(fres,1.8)*(0.1 + 0.5*smoothstep(1.05,1.6,vW.y))*(0.6+0.6*n);
         } else if(uMode==4){ // astral: arco-íris dos chakras infundido de rosa
           float n = fbm(vW*3.0 + vec3(uTime*0.12));
           float h = clamp((vW.y-0.75)/1.1,0.0,1.0);

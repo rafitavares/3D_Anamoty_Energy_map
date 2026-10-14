@@ -1,44 +1,61 @@
-# Atlas Energético 3D
+# Energy Anatomy Atlas 3D
 
-Atlas 3D interativo de **anatomia física e energética**. Mostra os órgãos, as glândulas, os 7 chakras (frente e costas), a corrente vertical de força, os nadis, as 7 camadas da aura, a linha do hara e a estrela do núcleo. As conexões seguem o modelo de Barbara Brennan (*Mãos de Luz*, *Luz Emergente*).
+An interactive 3D atlas of **physical and energetic anatomy**. It shows real anatomical organs, glands and the skeleton together with the 7 chakras (front and back aspects), the vertical power current, the nadis, the 7 layers of the aura, the hara line and the Core Star. The energetic correspondences follow Barbara Brennan’s model (*Hands of Light*, *Light Emerging*).
 
-## O que dá para fazer
+## What you can do
 
-- **Desequilibrar cada chakra** (aspectos frente e costas separados), usando a notação do pêndulo de Brennan:
-  `C6` aberto/equilibrado · `CC4` fechado (giro anti-horário) · `S` parado · `C10` sobreuso · elipse esquerda/direita (yin/yang).
-- Ver em tempo real os **órgãos afetados**: ficam acinzentados quando desvitalizados e vermelhos pulsantes quando sobrecarregados. A lista "Impacto nos órgãos" ordena todos por gravidade.
-- Ver o **fluxo de energia**: partículas espiralam para dentro dos vórtices abertos e para fora dos fechados. Os nadis pulsam do chakra até cada órgão, e a corrente vertical perde brilho quando o campo perde harmonia.
-- **Aura em 7 camadas**: chakras fechados aparecem como manchas escuras na altura correspondente, e chakras em excesso como clarões.
-- **Atlas**: busca e índice de todas as estruturas, com uma ficha de cada uma (função psicológica, glândula, caminho da energia, fontes).
-- Cenários prontos: coração fechado, excesso mental, vontade yang, raiz parada etc.
+- **Unbalance any chakra.** Front and back aspects are controlled separately, using Brennan’s pendulum notation:
+  - `C6`: open and balanced
+  - `CC4`: closed (counterclockwise spin)
+  - `S`: stopped
+  - `C10`: overused
+  - Left/right ellipse (yin/yang)
+- **See the affected organs in real time.** Organs turn grey when devitalized and pulse red when overloaded. The "Impact on organs" list ranks them by severity.
+- **Watch the energy flow.** Particles spiral into open vortices and out of closed ones. The nadis pulse from each chakra to its organs, and the vertical current dims as field harmony drops.
+- **Explore the aura in 7 layers.** Closed chakras show up as dark patches at the matching height; overactive chakras show up as flares.
+- **Use the Atlas.** Search and browse every structure. Each one has an info card covering its psychological function, gland, energy pathway and sources.
+- **Load ready-made scenarios:** closed heart, overly mental, excessive will, stopped root, and more.
 
-## Rodar
+## Run
 
-Não precisa de build. Basta servir a pasta por HTTP:
+No build step is needed. Serve the folder over HTTP:
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Depois abra http://localhost:8000. Também funciona direto no GitHub Pages.
+Then open http://localhost:8000. It also works as-is on GitHub Pages.
 
-Parâmetros de URL para links diretos: `?cenario=coracao_fechado&sel=chakra:4:front`, `?aura=all&camadas=hara,core&vista=hara`, `?sel=organ:figado`.
+You can link straight to a given state with URL parameters, for example:
+- `?scenario=closed_heart&sel=chakra:4:front`
+- `?aura=all&layers=hara,core&view=hara`
+- `?layers=skeleton&sel=organ:figado`
 
-## Estrutura
+## Structure
 
-| Arquivo | Conteúdo |
+| File | Contents |
 |---|---|
-| `js/data.js` | Base de conhecimento: chakras, órgãos, ligações, aura, hara, cenários |
-| `js/state.js` | Modelo de desequilíbrio (deficiência/excesso por órgão, harmonia) |
-| `js/anatomy.js` | Corpo e órgãos em 3D (procedurais) |
-| `js/energy.js` | Chakras, nadis, partículas, aura, hara, estrela do núcleo |
-| `js/ui.js`, `js/main.js` | Interface e cena |
+| `js/data.js` | Knowledge base: chakras, organs, links, aura, hara, scenarios |
+| `js/state.js` | Imbalance model (per-organ deficiency/excess, harmony) |
+| `js/anatomy.js` | Body and organs: real models plus procedural fallbacks |
+| `js/energy.js` | Chakras, nadis, particles, aura, hara, Core Star |
+| `js/ui.js`, `js/main.js` | Interface and scene |
+| `models/*.glb` | Anatomy models exported from Z-Anatomy (Draco-compressed) |
+| `tools/` | Blender scripts that regenerate `models/` |
 
-## Próximos passos
+## Anatomy models
 
-- Trocar os órgãos procedurais por modelos anatômicos reais em `.glb` (ex.: [Z-Anatomy](https://www.z-anatomy.com/) / BodyParts3D, CC BY-SA), mantendo os mesmos `id`.
-- Chakras menores, meridianos, modo de comparação lado a lado e salvar leituras de clientes.
+`models/orgaos.glb` (organs), `models/esqueleto.glb` (skeleton) and `models/silhueta.glb` (body silhouette) are generated from the [Z-Anatomy](https://github.com/Z-Anatomy/Models-of-human-anatomy) Blender file:
 
----
+```bash
+blender -b --factory-startup --disable-autoexec Startup.blend --python tools/zanatomy_export.py -- models
+```
 
-Ferramenta educacional. Não é diagnóstico médico.
+These sources have no Z-Anatomy model, so the app still draws them as simple shapes: aorta/blood vessels, vagus nerve, small intestine, and female reproductive organs.
+
+## Credits and license
+
+- **Anatomy models:** Z-Anatomy, *The libre 3D atlas of anatomy* (CC BY-SA 4.0), derived from **BodyParts3D**, © The Database Center for Life Science (CC BY-SA 2.1 Japan). The files in `models/` are distributed under **CC BY-SA 4.0**.
+- **Energetic model:** Barbara Brennan, *Hands of Light* and *Light Emerging*.
+
+Educational tool. Not a medical diagnosis.
