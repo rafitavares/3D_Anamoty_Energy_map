@@ -189,16 +189,71 @@ export const AURA_LAYERS = [
     info: 'An egg of golden threads of light that holds the whole form of the aura; the level of “I know”.' },
 ];
 
+// Deeper dimensions (Brennan, "Light Emerging", ch. 2, 17 and 18).
+// Each entry feeds the info card: what it is, what it is for, where it is,
+// how it looks when healthy and when distorted, and how to work with it.
 export const HARA = [
-  { id: 'id_point', name: 'ID point (individuation)', y: 2.75,
-    info: 'About 3½ feet above the head — the point where we first individuated from the divine (Brennan, “Light Emerging”).' },
-  { id: 'soul_seat', name: 'Soul seat', y: 1.37,
-    info: 'In the upper chest — where our spiritual longing and purpose reside.' },
-  { id: 'tan_tien', name: 'Tan tien', y: 0.98,
-    info: 'A golf-ball-sized sphere about 1½ inches below the navel — the center of the will to incarnate.' },
+  {
+    id: 'id_point', name: 'ID point', y: 2.75, color: '#ffffff',
+    subtitle: 'Individuation point · Haric dimension',
+    what: 'The first point of the hara line, floating above the head. It marks the moment we first individuated out of the undivided divine in order to incarnate.',
+    purpose: 'It holds our reason for incarnating and is our direct line of connection to the godhead and to our higher spiritual reality.',
+    where: 'About 3½ feet (≈1 m) above the head, on the body’s center line. It looks like a tiny inverted funnel, about ¼ inch wide at its open end, pointing down toward the head.',
+    healthy: 'Open, well formed and connected down the hara line: a felt, personal connection to the divine.',
+    distorted: 'It can be bent out of shape or clogged. Disconnection from the ID point tends to show up as cynicism about life and no personal experience of the sacred.',
+    practice: 'In healing, the healer clears the funnel and reconnects it to the rest of the hara line. Brennan reports that clients may then recall early memories of feeling connected to God, and begin building their own direct connection.',
+    source: 'Light Emerging, ch. 2 and 17 (fig. 17-4).',
+  },
+  {
+    id: 'soul_seat', name: 'Soul seat', y: 1.37, color: '#bfe0ff',
+    subtitle: 'Seat of the soul’s longing · Haric dimension',
+    what: 'The second point of the hara line: a soft, diffuse light in the upper chest. It is sometimes called the “high heart”, but it is not a chakra.',
+    purpose: 'It carries our spiritual longing, the sacred desire that guides us through life toward our life task. It is the felt sense of what we came here to do, from the smallest moment to the largest purpose.',
+    where: 'Upper chest, on the center line, above the heart chakra. Usually 1–2 inches across, but it can expand enormously in meditation.',
+    healthy: 'Bright and radiating in all directions: we feel clearly what we want and are moved by it.',
+    distorted: 'Usually it becomes shrouded by a dark cloud of energy. The person loses the feeling of what they want in life and may look sunken-chested and resigned, with a deep sadness and a sense that life is meaningless. This often follows a loss that was never mourned.',
+    practice: 'Clearing the shroud lets the light expand again. People may feel a new lease on life, or first go through grief for lost time before new enthusiasm arrives. Completing the natural mourning of a loved one is part of the healing.',
+    source: 'Light Emerging, ch. 2 and 17 (fig. 17-3).',
+  },
+  {
+    id: 'tan_tien', name: 'Tan tien', y: 0.98, color: '#ffb43a',
+    subtitle: 'Will to live in the body · Haric dimension',
+    what: 'The third point of the hara line: a ball of power in the lower abdomen with a firm membrane around it, like a rubber ball. It can look golden. It is the center martial artists move and draw power from.',
+    purpose: 'It is the will center for living in a physical body. It holds the “one note” that keeps the body in physical manifestation, a tone in harmony with the Earth’s molten core. Healers ground through it to draw regenerating power from the Earth.',
+    where: 'Lower abdomen on the center line, roughly 1½–2½ inches below the navel (Brennan gives both figures), and about the size of a golf ball. Its size does not change.',
+    healthy: 'Centered, round, charged and connected down the hara line deep into the Earth’s core. When fully grounded in healing it can glow red and feel hot.',
+    distorted: 'It can be pushed forward (jumping ahead of oneself), pulled back (holding back from one’s life task) or off to one side. Its membrane can tear or blow open. Typical results are chronic lower-back problems, and when torn, profound weakness and shakiness.',
+    practice: 'Repair it, re-center it on the hara line, ground it into the Earth and charge it. Brennan recommends martial arts such as tai chi with a good teacher, and grounding exercises with the fingertips placed on the tan tien.',
+    source: 'Light Emerging, ch. 2 and 17 (fig. 17-2); Healing Science, “Tan Tien Ground”.',
+  },
 ];
 
-export const CORE_STAR = { y: 1.06, info: 'The Core Star, about 1½ inches above the navel: individual essence, the source of all creative energy. Brennan notes that no illness exists at this level.' };
+export const HARA_LINE = {
+  id: 'hara_line', name: 'Hara line', y: 1.6, color: '#ffc85a',
+  subtitle: 'Haric dimension · intention and life purpose',
+  what: 'A laser-like line of light, about ⅓ inch wide, running along the body’s center line from the ID point above the head, through the soul seat and the tan tien, deep into the Earth’s core. It lies beneath the aura.',
+  purpose: 'It is the dimension of intention: our life task, our purpose for this incarnation and our purpose in each moment. Every creation passes through it on its way from the Core Star to the aura and the body.',
+  where: 'From about 3½ feet above the head down through the center of the body and into the center of the Earth.',
+  healthy: 'Straight, centered, charged and rooted in the Earth, with all three points balanced and connected. Life flows; there is integrity, purpose and no adversary, and aligned people naturally fall into step with each other.',
+  distorted: 'Misalignment shows as bent or broken lines, displaced points, or points disconnected from each other or from the Earth. Brennan sees it in every serious or long-term illness, and in arguments, procrastination and working at cross-purposes.',
+  practice: 'Align the hara line before acting, especially when you find yourself arguing. Clear intention on the haric level is what makes actions on the auric and physical levels bring pleasure.',
+  source: 'Light Emerging, ch. 2 and 17 (fig. 17-1, 17-5).',
+};
+
+export const CORE_STAR = {
+  id: 'core', name: 'Core Star', y: 1.06, color: '#ffffff',
+  subtitle: 'Core essence dimension · the divine within',
+  what: 'The deepest dimension of our being, beneath both the aura and the hara. It looks like a brilliant star of many colors, unique for every person: the individual aspect of the divine.',
+  purpose: 'It is the source of all our creative energy. Every creation starts as essence in the core, becomes intention in the hara line, life energy in the aura, and finally form in the physical world.',
+  where: 'About 1½ inches above the navel, on the body’s center line. Its light can expand without limit.',
+  healthy: 'Where the core light emerges through the hara, the aura and the body, there is health, joy, creativity and wisdom, love and courage.',
+  distorted: 'Nothing is ever wrong in the core itself. Illness here means disconnection: the star is shrouded by dark clouds or encased so its light cannot emerge, leading to loss of creativity and of any sense of inner divinity.',
+  practice: 'Brennan closes every healing by uncovering the Core Star and “upwelling” its essence into the hara, then the aura, then every cell of the body, and expanding it outward. You can practice by centering your attention on the star above the navel.',
+  source: 'Light Emerging, ch. 2 and 18.',
+};
+
+export const DEEP_ITEMS = [...HARA, HARA_LINE, CORE_STAR];
+export const findDeep = id => DEEP_ITEMS.find(x => x.id === id);
 
 // Readings: r = diameter in inches, as with Brennan’s pendulum (fig. 10-2).
 // r > 0 clockwise (open), r < 0 counterclockwise (closed), 0 = stopped.

@@ -1,4 +1,4 @@
-import { CHAKRAS, ORGANS, AURA_LAYERS, HARA, CORE_STAR, PRESETS } from './data.js';
+import { CHAKRAS, ORGANS, AURA_LAYERS, HARA, HARA_LINE, CORE_STAR, findDeep, PRESETS } from './data.js';
 import { state, setAspect, loadState, notation, aspectMetrics } from './state.js';
 
 const $ = s => document.querySelector(s);
@@ -145,7 +145,10 @@ export function initUI(app) {
     if (items.length) group(`${s} system`, items.map(o => [o.name, { kind: 'organ', id: o.id }]));
   }
   group('Aura', AURA_LAYERS.map(L => [`${L.n}. ${L.name}`, { kind: 'aura', n: L.n }, L.color]));
-  group('Deeper dimensions', [...HARA.map(x => [x.name, { kind: 'hara', id: x.id }, '#ffc85a']), ['Core Star', { kind: 'core', id: 'core' }, '#ffffff']]);
+  group('Deeper dimensions', [
+    [HARA_LINE.name, { kind: 'hara', id: HARA_LINE.id }, HARA_LINE.color],
+    ...HARA.map(x => [x.name, { kind: 'hara', id: x.id }, x.color]),
+    [CORE_STAR.name, { kind: 'core', id: CORE_STAR.id }, CORE_STAR.color]]);
   $('#search').addEventListener('input', e => {
     const q = e.target.value.toLowerCase().trim();
     for (const x of entries) x.b.hidden = q && !x.text.includes(q);
@@ -239,20 +242,26 @@ export function initUI(app) {
           : 'Layers 5 to 7 form the spiritual plane — spiritual template, feeling and mind.'),
         h('p', { class: 'muted' }, 'Closed or stopped chakras show up as dark patches in the aura at the matching height; overactive chakras show up as flares.'),
         h('p', { class: 'src' }, 'Source: B. Brennan, Hands of Light, ch. 7.'));
-    } else if (sel.kind === 'hara') {
-      const x = HARA.find(y => y.id === sel.id);
+    } else if (sel.kind === 'hara' || sel.kind === 'core') {
+      const x = findDeep(sel.id);
+      const section = (title, text, cls = '') => h('section', { class: `dsec ${cls}` }, h('h4', {}, title), h('p', {}, text));
+      // Lets the reader walk along the hara line: ID point → soul seat → tan tien, plus the Core Star.
+      const related = [HARA_LINE, ...HARA, CORE_STAR].filter(y => y !== x);
       info.append(close,
-        h('div', { class: 'ihead', style: '--c:#ffc85a' }, h('span', { class: 'swatch' }),
-          h('div', {}, h('h3', {}, x.name), h('small', {}, 'Haric dimension — intention'))),
-        h('p', {}, x.info),
-        h('p', { class: 'muted' }, 'The hara line connects the ID point, the soul seat and the tan tien, and reaches down to the core of the Earth. It lies beneath the aura and corresponds to intentionality.'),
-        h('p', { class: 'src' }, 'Source: B. Brennan, Light Emerging.'));
-    } else if (sel.kind === 'core') {
-      info.append(close,
-        h('div', { class: 'ihead', style: '--c:#ffffff' }, h('span', { class: 'swatch' }),
-          h('div', {}, h('h3', {}, 'Core Star'), h('small', {}, 'Core essence dimension'))),
-        h('p', {}, CORE_STAR.info),
-        h('p', { class: 'src' }, 'Source: B. Brennan, Light Emerging.'));
+        h('div', { class: 'ihead', style: `--c:${x.color}` }, h('span', { class: 'swatch' }),
+          h('div', {}, h('h3', {}, x.name), h('small', {}, x.subtitle))),
+        section('What it is', x.what),
+        section('What it is for', x.purpose),
+        section('Where it is', x.where),
+        section('When healthy', x.healthy, 'ok'),
+        section('When distorted', x.distorted, 'cold'),
+        section('Working with it', x.practice),
+        h('h4', {}, 'Explore the deeper dimensions'),
+        h('div', { class: 'olist' }, related.map(y => h('button', {
+          class: 'olink', style: `--c:${y.color}`,
+          onclick: () => app.select({ kind: y.id === 'core' ? 'core' : 'hara', id: y.id }),
+        }, h('span', {}, h('i', { class: 'dot' }), y.name), h('small', {}, y.subtitle.split(' · ')[0])))),
+        h('p', { class: 'src' }, `Source: B. Brennan, ${x.source}`));
     }
     document.body.classList.add('show-right');
   }

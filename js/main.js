@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { CHAKRAS, ORGANS, HARA, CORE_STAR, AURA_LAYERS, PRESETS } from './data.js';
+import { CHAKRAS, ORGANS, findDeep, AURA_LAYERS, PRESETS } from './data.js';
 import { computeAll, onChange, loadState } from './state.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { buildBody, buildOrgans, loadRealAnatomy, skeletonMesh } from './anatomy.js';
@@ -106,15 +106,13 @@ function positionOf(sel) {
     const c = CHAKRAS.find(x => x.id === sel.id);
     return new THREE.Vector3(0, c.y, sel.aspect === 'back' ? -0.08 : 0.04);
   }
-  if (sel.kind === 'hara') return new THREE.Vector3(0, HARA.find(h => h.id === sel.id).y, 0);
-  if (sel.kind === 'core') return new THREE.Vector3(0, CORE_STAR.y, 0);
+  if (sel.kind === 'hara' || sel.kind === 'core') return new THREE.Vector3(0, findDeep(sel.id).y, 0);
   return new THREE.Vector3(0, 1.1, 0);
 }
 function nameOf(sel) {
   if (sel.kind === 'organ') return ORGANS.find(o => o.id === sel.id).name;
   if (sel.kind === 'chakra') { const c = CHAKRAS.find(x => x.id === sel.id); return `${c.name} chakra`; }
-  if (sel.kind === 'hara') return HARA.find(h => h.id === sel.id).name;
-  if (sel.kind === 'core') return 'Core Star';
+  if (sel.kind === 'hara' || sel.kind === 'core') return findDeep(sel.id).name;
   if (sel.kind === 'aura') return AURA_LAYERS[sel.n - 1].name;
   return '';
 }
@@ -130,7 +128,8 @@ const app = {
     } else if (sel.kind === 'hara' || sel.kind === 'core') {
       energy.groups[sel.kind === 'core' ? 'core' : 'hara'].visible = true;
       ui.syncToggles();
-      if (fly) flyTo(positionOf(sel), sel.id === 'id_point' ? 2.2 : 1.4);
+      if (fly && sel.id === 'hara_line') VIEWS.hara();
+      else if (fly) flyTo(positionOf(sel), sel.id === 'id_point' ? 2.2 : 1.4);
     } else if (fly) {
       const p = positionOf(sel);
       const dir = sel.aspect === 'back' ? new THREE.Vector3(0.3, 0.1, -1) : new THREE.Vector3(0.3, 0.1, 1);
