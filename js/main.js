@@ -148,7 +148,8 @@ const app = {
   setVisible(key, v) {
     if (key === 'skin') body.group.visible = v;
     else if (key === 'organs') organs.group.visible = v;
-    else if (key === 'labels') chakraLabels.visible = v;
+    // CSS2DRenderer checks each label's own visibility, not its parent's.
+    else if (key === 'labels') chakraLabels.children.forEach(l => { l.visible = v; });
     else if (key === 'floor') floor.visible = v;
     else if (key === 'skeleton') setSkeleton(v);
     else energy.groups[key].visible = v;
@@ -158,7 +159,7 @@ const app = {
     if (key === 'skeleton') return !!skeleton?.visible;
     if (key === 'skin') return body.group.visible;
     if (key === 'organs') return organs.group.visible;
-    if (key === 'labels') return chakraLabels.visible;
+    if (key === 'labels') return chakraLabels.children.some(l => l.visible);
     if (key === 'floor') return floor.visible;
     return energy.groups[key].visible;
   },
