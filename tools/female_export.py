@@ -63,7 +63,8 @@ print(f'MALE height={male_h:.3f} back_y={male_back:.3f}')
 macro = TargetService.get_default_macro_info_dict()
 macro.update(gender=0.0, age=0.5, muscle=0.5, weight=0.5, proportions=0.6, height=0.5,
              cupsize=0.5, firmness=0.6)
-body = HumanService.create_human(mask_helpers=True, detailed_helpers=False, extra_vertex_groups=True,
+# detailed_helpers keeps the joint-* vertex groups the rig needs to fit the body.
+body = HumanService.create_human(mask_helpers=True, detailed_helpers=True, extra_vertex_groups=True,
                                  scale=0.1, macro_detail_dict=macro)
 rig = HumanService.add_builtin_rig(body, 'default')
 
@@ -73,12 +74,16 @@ bpy.context.view_layer.objects.active = rig
 rig.select_set(True)
 bpy.ops.object.mode_set(mode='POSE')
 rig_rot = rig.matrix_world.to_quaternion()
+# Angles from vertical, matching the Z-Anatomy male arms (hands ~0.24-0.30 m from the midline).
+ARM_ANGLE, FOREARM_ANGLE = 9, 13
 for side, s in (('L', 1), ('R', -1)):
-    for name, angle in ((f'upperarm01.{side}', 17), (f'lowerarm01.{side}', 25)):
+    # Each segment is a two-bone chain: shoulder -> elbow, elbow -> wrist.
+    for name, end, angle in ((f'upperarm01.{side}', f'lowerarm01.{side}', ARM_ANGLE),
+                             (f'lowerarm01.{side}', f'wrist.{side}', FOREARM_ANGLE)):
         bpy.context.view_layer.update()
         pb = rig.pose.bones[name]
         # Posed direction in world space, then the rotation that brings it to the target.
-        cur = (rig_rot @ (pb.tail - pb.head)).normalized()
+        cur = (rig_rot @ (rig.pose.bones[end].head - pb.head)).normalized()
         target = Vector((s * math.sin(math.radians(angle)), 0.0, -math.cos(math.radians(angle))))
         q_arm = rig_rot.inverted() @ cur.rotation_difference(target) @ rig_rot
         # Rotate the posed bone about its head, in armature space; children follow.
