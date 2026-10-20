@@ -9,13 +9,18 @@ An interactive 3D atlas of **physical and energetic anatomy**. It shows real ana
   - `CC4`: closed (counterclockwise spin)
   - `S`: stopped
   - `C10`: overused
-  - Left/right ellipse (yin/yang)
+  - Left/right ellipse (yin/yang): `CER`, `CEL`, `CCER`, `CCEL`
+  - Vertical ellipse `CEV` / `CCEV`: energy pushed up toward the spiritual. The chakras above receive it as excess.
+  - Horizontal ellipse `CEH` / `CCEH`: energy compacted and held down
+  - Ellipse with a shifting axis `CEAS` / `CCEAS`: the ellipse keeps changing direction (sensitive or negative chaos)
+  - Straight swings with no spin: `V`, `H`, `R`, `L`
+  - Each reading shows its psychological indication from *Hands of Light*, fig. 10-2.
 - **See the affected organs in real time.** Organs turn grey when devitalized and pulse red when overloaded. The "Impact on organs" list ranks them by severity.
 - **Watch the energy flow.** Particles spiral into open vortices and out of closed ones. The nadis pulse from each chakra to its organs, and the vertical current dims as field harmony drops.
 - **Explore the aura in 7 layers.** Closed chakras show up as dark patches at the matching height; overactive chakras show up as flares.
 - **Use the Atlas.** Search and browse every structure. Each one has an info card covering its psychological function, gland, energy pathway and sources.
 - **Switch between a male and a female body** with the Male / Female button. The internal organs, chakras and aura are shared; the body surface, gonads, reproductive organs and breasts change.
-- **Load ready-made scenarios:** closed heart, overly mental, excessive will, stopped root, and more.
+- **Load ready-made scenarios:** closed heart, overly mental, excessive will, stopped root, escaping upward (vertical), holding down (horizontal), deep transformation (axis shifting), severe split, and more.
 
 ## Run
 

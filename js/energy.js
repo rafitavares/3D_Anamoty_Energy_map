@@ -2,7 +2,7 @@
 // partículas de energia, as 7 camadas da aura, linha do hara e estrela do núcleo.
 import * as THREE from 'three';
 import { CHAKRAS, ORGANS, VPC, AURA_LAYERS, HARA, CORE_STAR } from './data.js';
-import { state, organPresent } from './state.js';
+import { state, organPresent, patternOf, isLinear } from './state.js';
 import { bodyGeometries } from './anatomy.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -110,7 +110,10 @@ function buildChakras(glow) {
       pick.userData = { pickKind: 'chakra', pickId: c.id, aspect };
       twist.add(pick);
       group.add(holder);
-      items.push({ c, aspect, key: `${c.id}.${aspect}`, holder, twist, mesh, mat, pick, core, phase: Math.random() * 10, dir, tip });
+      // upSign: twist.rotation.x that tilts this funnel toward the head (0 for the vertical chakras 1 and 7).
+      const upSign = aspect === 'front' ? -1 : aspect === 'back' ? 1 : 0;
+      items.push({ c, aspect, key: `${c.id}.${aspect}`, holder, twist, mesh, mat, pick, core, phase: Math.random() * 10, dir, tip,
+        upSign, tilt: 0, ang: 0, asAng: Math.random() * Math.PI, swing: Math.random() * 6 });
     }
   }
   return { group, items };
@@ -393,23 +396,45 @@ export function buildEnergy(organCenters) {
     const chakraFocus = id => (!focus || (focusChakra == null && organChakras == null)) ? 1
       : (focusChakra === id || organChakras?.has(id)) ? 1.3 : 0.18;
 
-    // Funis
+    // Funis — shape follows Brennan's pendulum patterns (fig. 10-2).
     for (const it of chakras.items) {
       const s = state[it.key];
       const r = s.r, mag = Math.abs(r);
+      const pat = patternOf(s), lin = isLinear(s) && r !== 0;
       const mouth = r === 0 ? 0.025 : 0.022 + mag * 0.011;
-      const k = Math.min(0.55, Math.abs(s.e) * 0.6);
-      it.twist.rotation.y = s.e === 0 ? 0 : Math.sign(s.e) * Math.PI / 4;
-      it.mesh.scale.set(mouth * (1 + k), FUNNEL_LEN * (r === 0 ? 0.6 : 0.8 + mag * 0.03), mouth * (1 - k * 0.7));
-      const speed = r === 0 ? 0 : (0.25 + mag * 0.12) * Math.sign(r);
+      let k = 0, ang = 0, tilt = 0, len = 1;
+      if (pat === 'O') { k = Math.min(0.55, Math.abs(s.e) * 0.6); ang = s.e === 0 ? 0 : Math.sign(s.e) * Math.PI / 4; }
+      else if (pat === 'EV') { k = 0.45; ang = Math.PI / 2; tilt = 0.35; }
+      else if (pat === 'EH') { k = 0.45; ang = 0; tilt = -0.18; len = 0.7; }
+      else if (pat === 'AS') {
+        // the ellipse keeps turning its axis, never settling left or right
+        it.asAng += dt * (0.6 + 0.4 * Math.sin(time * 0.7 + it.phase));
+        k = 0.45; ang = it.asAng;
+      } else { // linear swings
+        k = 0.85; ang = { V: Math.PI / 2, H: 0, R: Math.PI / 4, L: -Math.PI / 4 }[pat];
+        if (pat === 'V') tilt = 0.6;
+        if (pat === 'H') { tilt = -0.3; len = 0.6; }
+      }
+      if (r === 0) { k = 0; tilt = 0; }
+      // smooth transitions between patterns (the AS axis is already continuous)
+      const lerpK = Math.min(1, dt * 6);
+      if (pat === 'AS') it.ang = ang;
+      else { let d = ang - it.ang; d = Math.atan2(Math.sin(d), Math.cos(d)); it.ang += d * lerpK; }
+      it.tilt += (tilt * it.upSign - it.tilt) * lerpK;
+      it.twist.rotation.set(it.tilt, it.ang, 0);
+      it.swing += dt * (1.6 + mag * 0.12);
+      const sw = lin ? 0.55 + 0.45 * Math.abs(Math.sin(it.swing)) : 1;
+      const sx = mouth * (1 + k) * sw, sz = mouth * (lin ? 0.15 : 1 - k * 0.7);
+      it.mesh.scale.set(sx, FUNNEL_LEN * (r === 0 ? 0.6 : 0.8 + mag * 0.03) * len, sz);
+      const speed = (r === 0 || lin) ? 0 : (0.25 + mag * 0.12) * Math.sign(r);
       // Visto de fora, horário = aberto. O sentido do funil das costas é espelhado.
       it.phase += dt * speed * (it.aspect === 'back' || it.c.axis === 'down' ? -1 : 1);
       const m = it.mat.uniforms;
       m.uPhase.value = it.phase;
-      m.uMud.value = r <= 0 ? 0.75 : 0;
-      m.uIntensity.value = r === 0 ? 0.25 : r < 0 ? 0.5 : 0.6 + Math.min(mag, 10) * 0.07;
+      m.uMud.value = r <= 0 ? 0.75 : lin ? 0.5 : pat === 'EH' ? 0.3 : 0;
+      m.uIntensity.value = r === 0 ? 0.25 : r < 0 ? 0.5 : lin ? 0.45 : 0.6 + Math.min(mag, 10) * 0.07;
       m.uFocus.value = chakraFocus(it.c.id);
-      it.mesh.updateMatrixWorld();
+      it.twist.updateMatrixWorld(true);
     }
     for (const c of CHAKRAS) {
       const it = chakras.items.find(i => i.c === c);
@@ -425,6 +450,13 @@ export function buildEnergy(organCenters) {
     for (const p of cparts.parts) {
       const s = state[p.it.key];
       const r = s.r;
+      const lin = isLinear(s) && r !== 0;
+      if (lin) {
+        // no vortex: the energy just swings back and forth along one line, like the pendulum
+        p.v += dt * 0.05; if (p.v > 1.6) p.v -= 1.6;
+        const rad = (0.03 + p.v) * Math.sin(p.it.swing + p.a);
+        tmp.set(rad, Math.min(p.v, 1.6), 0).applyMatrix4(p.it.mesh.matrixWorld);
+      } else {
       const dir = r > 0 ? -1 : r < 0 ? 1 : 0; // aberto: entra; fechado: sai/estagna
       const speed = r > 0 ? 0.25 + r * 0.06 : 0.12;
       p.v += dt * speed * dir;
@@ -433,12 +465,13 @@ export function buildEnergy(organCenters) {
       if (p.v > 1.6) p.v -= 1.6;
       const rad = 0.03 + p.v; // continua alargando além da boca do funil
       tmp.set(Math.cos(p.a) * rad, Math.min(p.v, 1.6), Math.sin(p.a) * rad).applyMatrix4(p.it.mesh.matrixWorld);
+      }
       pos.setXYZ(p.idx, tmp.x, tmp.y, tmp.z);
       const fade = (p.v > 1.0 ? 1 - (p.v - 1.0) / 0.6 : 1) * Math.min(1, p.v * 4);
       const f = chakraFocus(p.it.c.id);
       cTmp.set(p.it.c.color);
-      if (r <= 0) cTmp.lerp(MUD, 0.7);
-      const b = (r === 0 ? 0.15 : r < 0 ? 0.45 : 0.6 + Math.min(r, 10) * 0.05) * fade * Math.min(f, 1);
+      if (r <= 0) cTmp.lerp(MUD, 0.7); else if (lin) cTmp.lerp(MUD, 0.4);
+      const b = (r === 0 ? 0.15 : r < 0 ? 0.45 : lin ? 0.4 : 0.6 + Math.min(r, 10) * 0.05) * fade * Math.min(f, 1);
       col.setXYZ(p.idx, cTmp.r * b, cTmp.g * b, cTmp.b * b);
     }
     pos.needsUpdate = true; col.needsUpdate = true;

@@ -276,5 +276,10 @@ export const PRESETS = {
   will: { label: 'Excessive will (yang)', state: { ...all(6), '3.back': { r: 9, e: 0.7 }, '4.back': { r: 9, e: 0.6 }, '5.back': { r: 8, e: 0.4 }, '4.front': { r: 3, e: 0 } } },
   stopped_root: { label: 'Stopped root', state: { ...all(6), '1.main': { r: 0, e: 0 }, '2.back': { r: -3, e: 0 }, '7.main': { r: 8, e: 0 } } },
   blocked_expression: { label: 'Blocked expression', state: { ...all(6), '5.front': { r: -4, e: 0 }, '5.back': { r: -2, e: -0.4 } } },
+  // Pendulum patterns from fig. 10-2 (illustrative scenarios, not case readings from the book).
+  spiritual_escape: { label: 'Escaping upward (vertical: CEV / V)', state: { ...all(6), '1.main': { r: 5, e: 0, m: 'V' }, '2.front': { r: 4, e: 0, m: 'EV' }, '2.back': { r: 4, e: 0, m: 'EV' }, '3.front': { r: 5, e: 0, m: 'EV' }, '4.front': { r: 5, e: 0, m: 'EV' } } },
+  holding_down: { label: 'Holding feelings down (horizontal: CEH / H)', state: { ...all(6), '4.front': { r: 4, e: 0, m: 'H' }, '3.front': { r: -5, e: 0, m: 'EH' }, '5.front': { r: 5, e: 0, m: 'EH' } } },
+  transformation: { label: 'Deep transformation (axis shifting: CEAS)', state: { ...all(6), '4.front': { r: 5, e: 0, m: 'AS' }, '3.front': { r: 6, e: 0, m: 'AS' }, '2.front': { r: -6, e: 0, m: 'AS' } } },
+  split: { label: 'Severe split (R / L swings)', state: { ...all(6), '4.back': { r: 3, e: 0, m: 'R' }, '3.back': { r: 4, e: 0, m: 'R' }, '2.front': { r: 4, e: 0, m: 'L' } } },
   receptive: { label: 'Overly receptive (yin)', state: { ...all(6, -0.6), '3.front': { r: 8, e: -0.7 }, '2.front': { r: 7, e: -0.6 } } },
 };

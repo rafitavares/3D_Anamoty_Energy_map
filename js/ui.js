@@ -1,5 +1,5 @@
 import { CHAKRAS, ORGANS, AURA_LAYERS, HARA, HARA_LINE, CORE_STAR, findDeep, PRESETS } from './data.js';
-import { state, setAspect, loadState, notation, aspectMetrics, organName, organInfo, organPresent } from './state.js';
+import { state, setAspect, loadState, notation, aspectMetrics, organName, organInfo, organPresent, PATTERNS, patternOf } from './state.js';
 
 const $ = s => document.querySelector(s);
 const h = (tag, attrs = {}, ...kids) => {
@@ -38,7 +38,9 @@ export function initUI(app) {
       for (const k of Object.keys(state)) {
         const roll = Math.random();
         s[k] = { r: roll < 0.12 ? 0 : roll < 0.35 ? -Math.ceil(Math.random() * 6) : Math.ceil(Math.random() * 10),
-          e: Math.random() < 0.3 ? Math.round((Math.random() * 2 - 1) * 10) / 10 : 0 };
+          e: Math.random() < 0.3 ? Math.round((Math.random() * 2 - 1) * 10) / 10 : 0,
+          m: Math.random() < 0.25 ? ['EV', 'EH', 'AS', 'V', 'H', 'R', 'L'][Math.floor(Math.random() * 7)] : 'O' };
+        if (s[k].m !== 'O' && s[k].r === 0) s[k].r = 4;
       }
       loadState(s);
     } else if (v) loadState(PRESETS[v].state);
@@ -65,21 +67,27 @@ export function initUI(app) {
       const lab = h('div', { class: 'alabel' });
       const r = h('input', { type: 'range', min: -10, max: 10, step: 1, class: 'r', 'aria-label': `Opening ${asp.code}` });
       const e = h('input', { type: 'range', min: -1, max: 1, step: 0.1, class: 'e', 'aria-label': `Ellipse ${asp.code}` });
+      const pat = h('select', { class: 'pat', 'aria-label': `Pendulum pattern ${asp.code}` },
+        ...Object.entries(PATTERNS).map(([k, P]) => h('option', { value: k }, P.label)));
       r.addEventListener('input', () => setAspect(key, { r: +r.value }));
       e.addEventListener('input', () => setAspect(key, { e: +e.value }));
-      const quick = (txt, val, title) => h('button', { title, onclick: () => setAspect(key, val) }, txt);
+      // A pattern needs movement: picking one on a stopped chakra starts it at 4".
+      pat.addEventListener('change', () => setAspect(key, state[key].r === 0 ? { m: pat.value, r: 4 } : { m: pat.value }));
+      const erow = h('div', { class: 'erow' }, h('span', {}, 'yin L'), e, h('span', {}, 'R yang'));
+      const quick = (txt, val, title) => h('button', { title, onclick: () => setAspect(key, { m: 'O', ...val }) }, txt);
       card.append(h('div', { class: 'aspect' },
         h('div', { class: 'arow' }, h('span', { class: 'code' }, asp.code), h('span', { class: 'aname' }, asp.name), badge),
         r,
         h('div', { class: 'scale' }, h('span', {}, '↺ closed'), h('span', {}, 'stopped'), h('span', {}, 'open ↻')),
-        h('div', { class: 'erow' }, h('span', {}, 'yin L'), e, h('span', {}, 'R yang')),
+        h('label', { class: 'prow' }, h('span', {}, 'Pattern'), pat),
+        erow,
         lab,
         h('div', { class: 'quick' },
           quick('Balance', { r: 6, e: 0 }, 'C6 — open and balanced'),
           quick('Close', { r: -6, e: 0 }, 'CC6 — counterclockwise spin'),
           quick('Stop', { r: 0, e: 0 }, 'S — no movement'),
           quick('Overactive', { r: 10, e: 0 }, 'C10 — overuse'))));
-      rows[key] = { r, e, badge, lab };
+      rows[key] = { r, e, pat, erow, badge, lab };
     }
     list.append(card);
   }
@@ -215,13 +223,14 @@ export function initUI(app) {
             h('div', { class: 'arow' }, h('span', { class: 'code' }, asp.code), h('b', {}, asp.name),
               h('span', { class: 'badge' }, notation(s))),
             h('p', {}, h('em', {}, `${asp.group} center: `), asp.fn),
-            h('small', {}, m.label));
+            h('small', {}, m.label),
+            h('p', { class: 'ind' }, h('em', {}, 'Pendulum reading: '), m.indication));
         }),
         bars(mc),
         h('p', { class: 'state-txt' }, mc.excess > 0.25 ? `In excess: ${c.excess}` : mc.deficit > 0.15 ? `Deficient: ${c.deficit}` : `Balanced: ${c.balanced}`),
         h('h4', {}, 'Connected organs and glands'),
         h('div', { class: 'olist' }, organs.map(o => organLink(o, metrics.om[o.id]))),
-        h('p', { class: 'src' }, 'Source: B. Brennan, Hands of Light, fig. 7-5 and 9-1.'));
+        h('p', { class: 'src' }, 'Source: B. Brennan, Hands of Light, fig. 7-5, 9-1 and 10-2.'));
     } else if (sel.kind === 'organ') {
       const o = ORGANS.find(x => x.id === sel.id);
       const m = metrics.om[o.id];
@@ -289,9 +298,12 @@ export function initUI(app) {
     for (const [key, row] of Object.entries(rows)) {
       const s = state[key];
       row.r.value = s.r; row.e.value = s.e;
+      row.pat.value = patternOf(s);
+      row.erow.hidden = patternOf(s) !== 'O';
       row.badge.textContent = notation(s);
       const m = aspectMetrics(s);
       row.lab.textContent = m.label;
+      row.lab.title = m.indication;
       row.lab.className = `alabel ${statusClass(m)}`;
     }
     const harm = Math.round(metrics.harmony * 100);

@@ -157,3 +157,8 @@ dt { color: var(--muted); } dd { margin: 0; }
   body.show-left #left { transform: none; }
   .legend { left: 16px; right: 16px; }
 }
+.erow[hidden] { display: none; }
+.prow { display: flex; align-items: center; gap: 6px; margin: 4px 0 2px; color: var(--muted); font-size: 10.5px; }
+.prow select { flex: 1; min-width: 0; font: inherit; font-size: 11px; padding: 3px 4px; border-radius: 6px;
+  background: #141935; border: 1px solid var(--line); max-width: none; }
+.asp .ind { font-size: 11.5px; margin: 4px 0 0; opacity: .85; }
