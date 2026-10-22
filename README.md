@@ -15,6 +15,15 @@ An interactive 3D atlas of **physical and energetic anatomy**. It shows real ana
   - Ellipse with a shifting axis `CEAS` / `CCEAS`: the ellipse keeps changing direction (sensitive or negative chaos)
   - Straight swings with no spin: `V`, `H`, `R`, `L`
   - Each reading shows its psychological indication from *Hands of Light*, fig. 10-2.
+- **See each chakra the way Brennan draws it** (*Hands of Light*, fig. 8-2 and 15-5). Each chakra is a large cone made of small spiral cones: 4 in the root, 6 in the sacral, 10, 12, 16, 96 and 972 above (fig. 7-5). A woven protective screen covers the opening. In health the small cones spin in synchrony; the more disturbed the chakra, the more erratic they become. Each small vortex feeds one organ. Brennan states the principle and gives the liver and pancreas vortices of the solar plexus as examples; the app assigns the rest by the direction each vortex faces. Selecting an organ highlights its vortex. You can switch back to the simple funnel or hide the screen in the Layers tab.
+- **Disfigure a chakra** with the forms of fig. 15-5:
+  - A: one vortex sprung out
+  - B: tip of one vortex pulled out
+  - C: clogged
+  - D: torn, with the screen ripped
+  - E: pulled to the left or right
+  - F: one vortex wedged open
+  - For A, B and F you pick which vortex, and the organ it feeds is hit hardest.
 - **See the affected organs in real time.** Organs turn grey when devitalized and pulse red when overloaded. The "Impact on organs" list ranks them by severity.
 - **Watch the energy flow.** Particles spiral into open vortices and out of closed ones. The nadis pulse from each chakra to its organs, and the vertical current dims as field harmony drops.
 - **Explore the aura in 7 layers.** Closed chakras show up as dark patches at the matching height; overactive chakras show up as flares.
@@ -46,6 +55,7 @@ You can link straight to a given state with URL parameters, for example:
 | `js/state.js` | Imbalance model (per-organ deficiency/excess, harmony) |
 | `js/anatomy.js` | Body and organs: real models plus procedural fallbacks |
 | `js/energy.js` | Chakras, nadis, particles, aura, hara, Core Star |
+| `js/vortex.js` | Small vortices inside each chakra and the disfigured forms of fig. 15-5 |
 | `js/ui.js`, `js/main.js` | Interface and scene |
 | `models/*.glb` | Anatomy models (Draco-compressed): Z-Anatomy male body, MPFB female body, female organs |
 | `tools/` | Blender scripts that regenerate `models/` |

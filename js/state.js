@@ -2,6 +2,7 @@
 // do pêndulo de Brennan: r = diâmetro (polegadas), sinal = sentido do giro;
 // e = elipse (assimetria esquerda/direita).
 import { CHAKRAS, ORGANS, PRESETS } from './data.js';
+import { FORMS } from './vortex.js';
 
 export const state = structuredClone(PRESETS.balanced.state);
 
@@ -11,6 +12,20 @@ export const organName = o => o[body.sex === 'F' ? 'female' : 'male']?.name ?? o
 export const organInfo = o => o[body.sex === 'F' ? 'female' : 'male']?.info ?? o.info;
 // Organs that only exist in one body (e.g. breasts) are left out of the other.
 export const organPresent = o => !o.sex || o.sex === body.sex;
+// Which small vortex of each chakra aspect feeds which organ.
+// Computed by energy.js from the organ positions: vortexMap[key][i] = organ id or null;
+// organVortex[organId] = [{ key, i }].
+export const vortices = { map: {}, organ: {}, version: 0 };
+export function setVortexMap(map) {
+  vortices.map = map;
+  vortices.organ = {};
+  for (const [key, list] of Object.entries(map)) list.forEach((id, i) => {
+    if (id) (vortices.organ[id] ??= []).push({ key, i });
+  });
+  vortices.version++;
+  emit();
+}
+export const formOf = s => (s.f && FORMS[s.f]) ? s.f : '';
 const listeners = new Set();
 export const onChange = fn => listeners.add(fn);
 export const emit = () => listeners.forEach(fn => fn());
@@ -108,7 +123,13 @@ export function aspectMetrics(s) {
     if (m === 'EH') { flow *= 0.6; deficit = Math.min(1, deficit + 0.25); label += ' · horizontal ellipse (held down)'; }
     if (m === 'AS') { deficit = Math.min(1, deficit + 0.1); label += r > 0 ? ' · axis shifting (sensitive chaos)' : ' · axis shifting (negative chaos)'; }
   }
-  return { deficit, excess, flow, up, label, e, m, indication: indication(s) };
+  const f = formOf(s), F = FORMS[f];
+  if (f) {
+    deficit = Math.min(1, deficit + F.deficit);
+    if (F.side) e = Math.max(-1, Math.min(1, e + F.side * 0.8));
+    label += ` · form ${F.short}`;
+  }
+  return { deficit, excess, flow, up, label, e, m, f, indication: indication(s) };
 }
 
 export function chakraMetrics(c) {
@@ -124,6 +145,11 @@ export function organMetrics(o, cm) {
     wsum += l.w; deficit += l.w * m.deficit; excess += l.w * m.excess;
   }
   deficit /= wsum; excess /= wsum;
+  // A disfigured small vortex (fig. 15-5 A, B, F) starves the organ it feeds.
+  for (const { key, i } of vortices.organ[o.id] ?? []) {
+    const st = state[key], F = FORMS[formOf(st)];
+    if (F.one && (st.v ?? 0) === i) deficit = Math.min(1, deficit + F.organ);
+  }
   // Elipse: o lado "yang" (direito) fica sobrecarregado e o oposto, desvitalizado.
   if (o.side) {
     const e = o.links.reduce((s, l) => s + l.w * cm[l.c].e, 0) / wsum;
@@ -158,6 +184,7 @@ export function computeAll() {
   const sd = Math.sqrt(sizes.reduce((a, b) => a + (b - mean) ** 2, 0) / sizes.length);
   const closed = Object.values(state).filter(s => s.r <= 0).length;
   const odd = Object.values(state).filter(s => s.r !== 0 && patternOf(s) !== 'O').length;
-  const harmony = Math.max(0, 1 - sd / 4 - closed * 0.08 - odd * 0.05 - Math.abs(mean - 6) / 12);
+  const deformed = Object.values(state).filter(s => formOf(s)).length;
+  const harmony = Math.max(0, 1 - sd / 4 - closed * 0.08 - odd * 0.05 - deformed * 0.06 - Math.abs(mean - 6) / 12);
   return { cm, om, harmony };
 }

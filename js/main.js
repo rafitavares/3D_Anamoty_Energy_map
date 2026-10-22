@@ -168,6 +168,8 @@ const app = {
   setSkinOpacity: v => { body.material.uniforms.uOpacity.value = v; },
   setAuraOpacity: v => { energy.auraUniforms.uOpacity.value = v; },
   setSpeed: v => { speed = v; },
+  get bookChakras() { return energy.book; }, setBookChakras: v => energy.setBook(v),
+  get chakraScreen() { return energy.screen; }, setChakraScreen: v => energy.setScreen(v),
   setGlandsOnly: v => { showGlandsOnly = v; applyOrganVisibility(); },
   get sex() { return bodyState.sex; },
   setSex,

@@ -1,5 +1,6 @@
 import { CHAKRAS, ORGANS, AURA_LAYERS, HARA, HARA_LINE, CORE_STAR, findDeep, PRESETS } from './data.js';
-import { state, setAspect, loadState, notation, aspectMetrics, organName, organInfo, organPresent, PATTERNS, patternOf } from './state.js';
+import { state, setAspect, loadState, notation, aspectMetrics, organName, organInfo, organPresent, PATTERNS, patternOf, formOf, vortices } from './state.js';
+import { FORMS, FORM_SOURCE } from './vortex.js';
 
 const $ = s => document.querySelector(s);
 const h = (tag, attrs = {}, ...kids) => {
@@ -16,6 +17,17 @@ const chakraById = id => CHAKRAS.find(c => c.id === id);
 const pct = x => `${Math.round(x * 100)}%`;
 const statusClass = m => m.excess > 0.25 && m.excess >= m.deficit ? 'hot' : m.deficit > 0.15 ? 'cold' : 'ok';
 const ordinal = n => `${n}${['th', 'st', 'nd', 'rd'][n < 4 ? n : 0]}`;
+const organById = id => ORGANS.find(o => o.id === id);
+// Options for the "affected vortex" menu: every vortex that feeds an organ, plus one free vortex.
+function vortexOptions(key, c) {
+  const owners = vortices.map[key] ?? [];
+  const opts = [];
+  owners.forEach((id, i) => { if (id) opts.push(h('option', { value: i }, `Vortex ${i + 1} → ${organName(organById(id))}`)); });
+  const free = owners.findIndex(id => !id);
+  if (free >= 0) opts.push(h('option', { value: free }, `Vortex ${free + 1} (no organ assigned)`));
+  if (!opts.length) opts.push(h('option', { value: 0 }, 'Vortex 1'));
+  return opts;
+}
 
 export function initUI(app) {
   // ---------- Tabs ----------
@@ -73,6 +85,13 @@ export function initUI(app) {
       e.addEventListener('input', () => setAspect(key, { e: +e.value }));
       // A pattern needs movement: picking one on a stopped chakra starts it at 4".
       pat.addEventListener('change', () => setAspect(key, state[key].r === 0 ? { m: pat.value, r: 4 } : { m: pat.value }));
+      // Form of the vortex (fig. 15-5) and, for A/B/F, which small vortex is affected.
+      const form = h('select', { class: 'pat', 'aria-label': `Form ${asp.code}` },
+        ...Object.entries(FORMS).map(([k, F]) => h('option', { value: k }, F.label)));
+      const vsel = h('select', { class: 'pat', 'aria-label': `Affected vortex ${asp.code}` });
+      form.addEventListener('change', () => setAspect(key, { f: form.value }));
+      vsel.addEventListener('change', () => setAspect(key, { v: +vsel.value }));
+      const vrow = h('label', { class: 'prow' }, h('span', {}, 'Vortex'), vsel);
       const erow = h('div', { class: 'erow' }, h('span', {}, 'yin L'), e, h('span', {}, 'R yang'));
       const quick = (txt, val, title) => h('button', { title, onclick: () => setAspect(key, { m: 'O', ...val }) }, txt);
       card.append(h('div', { class: 'aspect' },
@@ -80,14 +99,16 @@ export function initUI(app) {
         r,
         h('div', { class: 'scale' }, h('span', {}, '↺ closed'), h('span', {}, 'stopped'), h('span', {}, 'open ↻')),
         h('label', { class: 'prow' }, h('span', {}, 'Pattern'), pat),
+        h('label', { class: 'prow' }, h('span', {}, 'Form'), form),
+        vrow,
         erow,
         lab,
         h('div', { class: 'quick' },
-          quick('Balance', { r: 6, e: 0 }, 'C6 — open and balanced'),
+          quick('Balance', { r: 6, e: 0, f: '' }, 'C6 — open and balanced, healthy form'),
           quick('Close', { r: -6, e: 0 }, 'CC6 — counterclockwise spin'),
           quick('Stop', { r: 0, e: 0 }, 'S — no movement'),
           quick('Overactive', { r: 10, e: 0 }, 'C10 — overuse'))));
-      rows[key] = { r, e, pat, erow, badge, lab };
+      rows[key] = { r, e, pat, erow, badge, lab, form, vsel, vrow, c, vver: -1 };
     }
     list.append(card);
   }
@@ -119,6 +140,8 @@ export function initUI(app) {
       ...systems.map(s => { let on = true; return toggle(s, () => on, v => { on = v; app.setSystem(s, v); }); })),
     h('h4', {}, 'Energy body'),
     toggle('Chakras (vortices)', ...vis('chakras')),
+    toggle('Book view: vortex of small vortices', () => app.bookChakras, app.setBookChakras),
+    toggle('Protective screen over chakras', () => app.chakraScreen, app.setChakraScreen),
     toggle('Particle flow', ...vis('particles')),
     toggle('Nadis (chakra → organ)', ...vis('nadis')),
     toggle('Vertical power current', ...vis('vpc')),
@@ -224,13 +247,27 @@ export function initUI(app) {
               h('span', { class: 'badge' }, notation(s))),
             h('p', {}, h('em', {}, `${asp.group} center: `), asp.fn),
             h('small', {}, m.label),
-            h('p', { class: 'ind' }, h('em', {}, 'Pendulum reading: '), m.indication));
+            h('p', { class: 'ind' }, h('em', {}, 'Pendulum reading: '), m.indication),
+            m.f ? h('p', { class: 'ind' }, h('em', {}, `Form (fig. 15-5 ${m.f[0]}): `), FORMS[m.f].text) : null);
+        }),
+        h('h4', {}, `Small vortices — ${c.vortices} per ${Object.keys(c.aspects).length > 1 ? 'aspect' : 'chakra'}`),
+        h('p', { class: 'muted' }, 'Each chakra is a large cone made of smaller spiral cones. In health they spin in synchrony; in disease they turn fast, slow, jerky or lopsided. Brennan: “I am beginning to think that each vortex of a chakra supplies a specific organ with energy.” She gives two examples (pancreas and liver vortices of the solar plexus); the other assignments follow the direction each vortex faces.'),
+        ...Object.entries(c.aspects).map(([a, asp]) => {
+          const key = `${c.id}.${a}`, owners = vortices.map[key] ?? [];
+          const fed = owners.map((id, i) => [id, i]).filter(([id]) => id && organPresent(organById(id)));
+          return h('div', { class: 'vlist' }, h('b', {}, asp.code),
+            h('div', { class: 'olist' }, fed.map(([id, i]) => {
+              const o = organById(id);
+              return h('button', { class: `olink ${statusClass(metrics.om[id])}`, onclick: () => app.select({ kind: 'organ', id }) },
+                h('span', {}, `Vortex ${i + 1} → ${organName(o)}`), h('small', {}, metrics.om[id].status));
+            })),
+            fed.length < owners.length ? h('small', { class: 'muted' }, `${owners.length - fed.length} more vortices with no specific organ assigned.`) : null);
         }),
         bars(mc),
         h('p', { class: 'state-txt' }, mc.excess > 0.25 ? `In excess: ${c.excess}` : mc.deficit > 0.15 ? `Deficient: ${c.deficit}` : `Balanced: ${c.balanced}`),
         h('h4', {}, 'Connected organs and glands'),
         h('div', { class: 'olist' }, organs.map(o => organLink(o, metrics.om[o.id]))),
-        h('p', { class: 'src' }, 'Source: B. Brennan, Hands of Light, fig. 7-5, 9-1 and 10-2.'));
+        h('p', { class: 'src' }, `Source: B. Brennan, Hands of Light, fig. 7-5, 9-1, 10-2; ${FORM_SOURCE}`));
     } else if (sel.kind === 'organ') {
       const o = ORGANS.find(x => x.id === sel.id);
       const m = metrics.om[o.id];
@@ -241,6 +278,11 @@ export function initUI(app) {
         h('p', {}, organInfo(o)),
         h('div', { class: `status ${statusClass(m)}` }, m.status),
         bars(m),
+        (vortices.organ[o.id] ?? []).length ? h('p', { class: 'muted' }, 'Fed by the small vortex ',
+          (vortices.organ[o.id]).map(({ key, i }) => {
+            const [cid, a] = key.split('.'); const ch = chakraById(cid);
+            return `${i + 1} of ${ch.aspects[a].code}`;
+          }).join(', '), ' (highlighted in the 3D view).') : null,
         h('h4', {}, 'Chakras that feed it'),
         h('div', { class: 'olist' }, o.links.map(l => {
           const c = chakraById(l.c);
@@ -300,6 +342,13 @@ export function initUI(app) {
       row.r.value = s.r; row.e.value = s.e;
       row.pat.value = patternOf(s);
       row.erow.hidden = patternOf(s) !== 'O';
+      row.form.value = formOf(s);
+      row.vrow.hidden = !FORMS[formOf(s)].one;
+      if (row.vver !== vortices.version) { // organ names change with the vortex map
+        row.vver = vortices.version;
+        row.vsel.replaceChildren(...vortexOptions(key, row.c));
+      }
+      row.vsel.value = String(s.v ?? 0);
       row.badge.textContent = notation(s);
       const m = aspectMetrics(s);
       row.lab.textContent = m.label;

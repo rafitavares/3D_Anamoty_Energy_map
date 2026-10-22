@@ -281,5 +281,9 @@ export const PRESETS = {
   holding_down: { label: 'Holding feelings down (horizontal: CEH / H)', state: { ...all(6), '4.front': { r: 4, e: 0, m: 'H' }, '3.front': { r: -5, e: 0, m: 'EH' }, '5.front': { r: 5, e: 0, m: 'EH' } } },
   transformation: { label: 'Deep transformation (axis shifting: CEAS)', state: { ...all(6), '4.front': { r: 5, e: 0, m: 'AS' }, '3.front': { r: 6, e: 0, m: 'AS' }, '2.front': { r: -6, e: 0, m: 'AS' } } },
   split: { label: 'Severe split (R / L swings)', state: { ...all(6), '4.back': { r: 3, e: 0, m: 'R' }, '3.back': { r: 4, e: 0, m: 'R' }, '2.front': { r: 4, e: 0, m: 'L' } } },
+  // Disfigured chakras, fig. 15-5 (illustrative).
+  clogged_heart: { label: 'Clogged heart (fig. 15-5 C)', state: { ...all(6), '4.front': { r: 4, e: 0, f: 'C' }, '4.back': { r: 5, e: 0, f: 'C' } } },
+  torn_solar: { label: 'Torn solar plexus (fig. 15-5 D)', state: { ...all(6), '3.front': { r: 5, e: 0, f: 'D' } } },
+  root_pulled: { label: 'Root pulled to one side (fig. 15-5 E)', state: { ...all(6), '1.main': { r: 5, e: 0, f: 'EL' } } },
   receptive: { label: 'Overly receptive (yin)', state: { ...all(6, -0.6), '3.front': { r: 8, e: -0.7 }, '2.front': { r: 7, e: -0.6 } } },
 };
