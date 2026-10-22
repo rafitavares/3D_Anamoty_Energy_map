@@ -179,6 +179,38 @@ export const ORGANS = [
     links: [{ c: '3', w: 0.7 }, { c: '6', w: 0.7 }], info: 'Brennan links the nervous system to the 3rd and 6th chakras.' },
 ];
 
+// Each chakra exists on all seven layers, "nested within each other like nesting glasses":
+// on each higher layer it "extends out farther in the auric field (to the edge of each auric
+// layer) and is slightly broader than the one below it" (Hands of Light, ch. 7).
+// dist = where the open end sits, in inches from the skin: layer 1 is Brennan's explicit
+// "about six inches in diameter at a distance of one inch from the body"; layers 2–7 use the
+// outer edge she gives for each layer. diam = mouth diameter in inches at a C6 reading:
+// 6 in on layer 1; "slightly broader" per layer is not quantified in the book, so the
+// app uses +15% per layer (an estimate).
+// color: how the chakras look on that layer, from her description of each layer.
+const RAINBOW_L2 = ['#ff2a2a', '#ff5a1f', '#ffd21a', '#3ddc4a', '#5ec8ff', '#4b3bff', '#ffffff'];
+export const CHAKRA_LEVELS = [
+  { n: 1, name: 'Etheric', dist: 1, look: 'Vortices made of a net of light, the same light blue to grey as the etheric body.',
+    color: () => '#8fb4e8' },
+  { n: 2, name: 'Emotional', dist: 3, look: 'Each chakra a vortex of a different colour, following the rainbow: red, red-orange, yellow, grass green, sky blue, indigo, white.',
+    color: c => RAINBOW_L2[c.n - 1] },
+  { n: 3, name: 'Mental', dist: 8, look: 'The mental body is mostly yellow; Brennan does not describe the chakra colours of this layer separately, so they are shown in its yellow.',
+    color: () => '#ffe066' },
+  { n: 4, name: 'Astral', dist: 12, look: 'The same rainbow octave as the emotional layer, each chakra infused with the rose light of love.',
+    color: c => mixHex(RAINBOW_L2[c.n - 1], '#ff7fb0', 0.45) },
+  { n: 5, name: 'Etheric template', dist: 24, look: 'Clear, transparent lines on a cobalt-blue background, like an architect’s blueprint in negative space.',
+    color: () => '#3a5bff' },
+  { n: 6, name: 'Celestial', dist: 33, look: 'Shimmering opalescent pastel light with a gold-silver shine.',
+    color: c => mixHex(RAINBOW_L2[c.n - 1], '#ffffff', 0.6) },
+  { n: 7, name: 'Ketheric template', dist: 42, look: 'All chakras and body forms appear to be made of golden light, a golden grid.',
+    color: () => '#ffd36a' },
+].map(L => ({ ...L, diam: 6 * 1.15 ** (L.n - 1) }));
+function mixHex(a, b, t) {
+  const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const [x, y] = [p(a), p(b)];
+  return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join('');
+}
+
 export const AURA_LAYERS = [
   { n: 1, name: 'Etheric body', color: '#7fb8ff', dist: '¼ to 2 inches',
     info: 'A web of light lines with the same structure as the physical body — the matrix on which the tissues are anchored.' },

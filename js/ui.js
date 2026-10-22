@@ -1,4 +1,4 @@
-import { CHAKRAS, ORGANS, AURA_LAYERS, HARA, HARA_LINE, CORE_STAR, findDeep, PRESETS } from './data.js';
+import { CHAKRAS, ORGANS, AURA_LAYERS, HARA, HARA_LINE, CORE_STAR, findDeep, PRESETS, CHAKRA_LEVELS } from './data.js';
 import { state, setAspect, loadState, notation, aspectMetrics, organName, organInfo, organPresent, PATTERNS, patternOf, formOf, vortices } from './state.js';
 import { FORMS, FORM_SOURCE } from './vortex.js';
 
@@ -140,6 +140,14 @@ export function initUI(app) {
       ...systems.map(s => { let on = true; return toggle(s, () => on, v => { on = v; app.setSystem(s, v); }); })),
     h('h4', {}, 'Energy body'),
     toggle('Chakras (vortices)', ...vis('chakras')),
+    (() => {
+      const sel = h('select', { class: 'levelsel' }, ...CHAKRA_LEVELS.map(L =>
+        h('option', { value: L.n }, `Level ${L.n} · ${L.name} (${L.dist}″ out, ${L.diam.toFixed(0)}″ wide)`)));
+      sel.value = String(app.chakraLevel);
+      sel.addEventListener('change', () => app.setChakraLevel(+sel.value));
+      return h('label', { class: 'sl' }, h('span', {}, 'Chakras on aura level'), sel);
+    })(),
+    toggle('Show all 7 levels nested', () => app.chakraNested, app.setChakraNested),
     toggle('Book view: vortex of small vortices', () => app.bookChakras, app.setBookChakras),
     toggle('Protective screen over chakras', () => app.chakraScreen, app.setChakraScreen),
     toggle('Particle flow', ...vis('particles')),
@@ -250,6 +258,12 @@ export function initUI(app) {
             h('p', { class: 'ind' }, h('em', {}, 'Pendulum reading: '), m.indication),
             m.f ? h('p', { class: 'ind' }, h('em', {}, `Form (fig. 15-5 ${m.f[0]}): `), FORMS[m.f].text) : null);
         }),
+        (() => {
+          const L = CHAKRA_LEVELS[app.chakraLevel - 1];
+          return h('div', { class: 'levelnote' }, h('h4', {}, `Shown on level ${L.n} — ${L.name}`),
+            h('p', {}, `Open end about ${L.dist} inch${L.dist > 1 ? 'es' : ''} outside the skin, about ${L.diam.toFixed(1)} inches across at C6. ${L.look}`),
+            h('p', { class: 'muted' }, 'Each chakra exists on all seven layers of the aura, nested like glasses: on each higher layer it reaches farther out, to the edge of that layer, and is slightly broader. Choose the level in the Layers tab. Layer 1 size (6 in wide, 1 in from the body) is Brennan’s; the widening per layer (+15%) is an estimate, since the book gives no number.'));
+        })(),
         h('h4', {}, `Small vortices — ${c.vortices} per ${Object.keys(c.aspects).length > 1 ? 'aspect' : 'chakra'}`),
         h('p', { class: 'muted' }, 'Each chakra is a large cone made of smaller spiral cones. In health they spin in synchrony; in disease they turn fast, slow, jerky or lopsided. Brennan: “I am beginning to think that each vortex of a chakra supplies a specific organ with energy.” She gives two examples (pancreas and liver vortices of the solar plexus); the other assignments follow the direction each vortex faces.'),
         ...Object.entries(c.aspects).map(([a, asp]) => {

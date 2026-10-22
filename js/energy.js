@@ -1,13 +1,14 @@
 // Anatomia energética: chakras, corrente vertical de força (VPC), nadis,
 // partículas de energia, as 7 camadas da aura, linha do hara e estrela do núcleo.
 import * as THREE from 'three';
-import { CHAKRAS, ORGANS, VPC, AURA_LAYERS, HARA, CORE_STAR } from './data.js';
+import { CHAKRAS, ORGANS, VPC, AURA_LAYERS, HARA, CORE_STAR, CHAKRA_LEVELS } from './data.js';
 import { state, organPresent, patternOf, isLinear, formOf, setVortexMap, vortices } from './state.js';
 import { layoutFor, FORMS } from './vortex.js';
 import { bodyGeometries } from './anatomy.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const FUNNEL_LEN = 0.24;
+const INCH = 0.0254;
 const VISUAL_PETALS = { 4: 4, 6: 6, 10: 10, 12: 12, 16: 16, 96: 24, 972: 36 };
 const MUD = new THREE.Color('#5a4a3a');
 
@@ -241,6 +242,15 @@ function buildChakras(glow) {
       const haze = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: '#2a2018', transparent: true, depthWrite: false, opacity: 0 }));
       haze.renderOrder = 13;
       twist.add(haze);
+      // the same chakra on the other six layers, nested like glasses (shown with "all levels")
+      const ghosts = CHAKRA_LEVELS.map(L => {
+        const gm = funnelMaterial(L.color(c));
+        gm.uniforms.uEnvelope.value = 1;
+        const gmesh = new THREE.Mesh(funnelGeo, gm);
+        gmesh.renderOrder = 9; gmesh.visible = false;
+        twist.add(gmesh);
+        return { L, mesh: gmesh, mat: gm };
+      });
       const pick = new THREE.Mesh(pickGeo, pickMat);
       pick.position.set(0, FUNNEL_LEN * 0.65, 0); pick.scale.setScalar(0.06);
       pick.userData = { pickKind: 'chakra', pickId: c.id, aspect };
@@ -250,7 +260,7 @@ function buildChakras(glow) {
       const upSign = aspect === 'front' ? -1 : aspect === 'back' ? 1 : 0;
       items.push({ c, aspect, key: `${c.id}.${aspect}`, holder, twist, mesh, mat, pick, core, phase: Math.random() * 10, dir, tip,
         upSign, tilt: 0, ang: 0, asAng: Math.random() * Math.PI, swing: Math.random() * 6,
-        lay, sub, subMat, screen, scrMat, haze, bend: 0, hiKey: '', orbit: 0 });
+        lay, sub, subMat, screen, scrMat, haze, bend: 0, hiKey: '', orbit: 0, ghosts, skin: 0.1, levelKey: 0, color: new THREE.Color(c.color) });
       twist.rotation.order = 'ZXY'; // spin orientation, then tilt, then the side pull of form E
     }
   }
@@ -512,6 +522,33 @@ function buildCoreStar() {
 }
 
 // ---------------- Montagem + atualização ----------------
+// Distance from the root of each chakra (on the spine) to the skin along its axis, measured
+// on the body model, so each chakra opens at the right distance outside the body.
+function measureSkin(items, parts) {
+  const meshes = parts.map(p => {
+    const m = new THREE.Mesh(p.geo, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
+    m.position.copy(p.pos); m.quaternion.copy(p.quat); m.scale.copy(p.scale); m.updateMatrixWorld(true);
+    return m;
+  });
+  const ray = new THREE.Raycaster();
+  // The body mesh has a seam on the midline, where a ray can slip through; cast a few rays
+  // just beside the axis and keep the nearest skin hit.
+  const OFFS = [[0.004, 0], [-0.004, 0], [0.009, 0.005], [-0.009, -0.005], [0, 0.006]];
+  const o = new THREE.Vector3();
+  for (const it of items) {
+    const side = Math.abs(it.dir.y) > 0.5 ? [V(1, 0, 0), V(0, 0, 1)] : [V(1, 0, 0), V(0, 1, 0)];
+    let best = Infinity;
+    for (const [a, b] of OFFS) {
+      o.copy(it.tip).addScaledVector(side[0], a).addScaledVector(side[1], b);
+      ray.set(o, it.dir); ray.far = 0.4;
+      // the root sits inside the body, so the first surface crossed is the skin
+      const hit = ray.intersectObjects(meshes, false).find(h => h.distance > 0.002);
+      if (hit) best = Math.min(best, hit.distance);
+    }
+    it.skin = Number.isFinite(best) ? best : (it.c.axis ? 0.03 : 0.1);
+  }
+}
+
 // Which small vortex feeds which organ. Brennan gives the principle ("each vortex of a chakra
 // supplies a specific organ") and two examples (in the solar plexus, the pancreas vortex on the
 // left and the liver vortex near the liver). The rest is a spatial reading: each organ goes to
@@ -553,7 +590,17 @@ export function buildEnergy(organCenters) {
   const core = buildCoreStar();
 
   const pickables = [...chakras.items.map(i => i.pick), ...Object.values(hara.markers).map(m => m.pick), core.pick];
-  const opts = { book: true, screen: true };
+  const opts = { book: true, screen: true, level: 1, nested: false };
+  measureSkin(chakras.items, bodyGeometries());
+  function applyLevelColors() {
+    const L = CHAKRA_LEVELS[opts.level - 1];
+    for (const it of chakras.items) {
+      it.color.set(L.color(it.c));
+      for (const m of [it.mat, it.subMat, it.scrMat]) m.uniforms.uColor.value.copy(it.color);
+      it.core.material.color.copy(it.color);
+    }
+  }
+  applyLevelColors();
   for (const it of chakras.items) it.holder.updateMatrixWorld(true);
   setVortexMap(computeVortexMap(chakras.items, organCenters));
   const tmp = new THREE.Vector3();
@@ -570,12 +617,18 @@ export function buildEnergy(organCenters) {
     const chakraFocus = id => (!focus || (focusChakra == null && organChakras == null)) ? 1
       : (focusChakra === id || organChakras?.has(id)) ? 1.3 : 0.18;
 
+    const m0Focus = it => chakraFocus(it.c.id);
     // Funis — shape follows Brennan's pendulum patterns (fig. 10-2).
     for (const it of chakras.items) {
       const s = state[it.key];
       const r = s.r, mag = Math.abs(r);
       const pat = patternOf(s), lin = isLinear(s) && r !== 0;
-      const mouth = r === 0 ? 0.025 : 0.022 + mag * 0.011;
+      // Size on the chosen layer: mouth at that layer's distance from the skin, diameter scaled by the
+      // pendulum reading (C6 = the book's 6 in on layer 1). |r| < 6 smaller, > 6 larger.
+      const LV = CHAKRA_LEVELS[opts.level - 1];
+      const sizeK = r === 0 ? 0.25 : 0.25 + Math.min(mag, 12) * 0.125;
+      const mouth = (LV.diam / 2) * INCH * sizeK;
+      const lenAt = L => (it.skin + L.dist * INCH) * (r === 0 ? 0.75 : 0.9 + Math.min(mag, 10) * 0.0167);
       let k = 0, ang = 0, tilt = 0, len = 1;
       if (pat === 'O') { k = Math.min(0.55, Math.abs(s.e) * 0.6); ang = s.e === 0 ? 0 : Math.sign(s.e) * Math.PI / 4; }
       else if (pat === 'EV') { k = 0.45; ang = Math.PI / 2; tilt = 0.35; }
@@ -602,7 +655,19 @@ export function buildEnergy(organCenters) {
       it.swing += dt * (1.6 + mag * 0.12);
       const sw = lin ? 0.55 + 0.45 * Math.abs(Math.sin(it.swing)) : 1;
       const sx = mouth * (1 + k) * sw, sz = mouth * (lin ? 0.15 : 1 - k * 0.7);
-      it.mesh.scale.set(sx, FUNNEL_LEN * (r === 0 ? 0.6 : 0.8 + mag * 0.03) * len, sz);
+      const flen = lenAt(LV) * len;
+      it.mesh.scale.set(sx, flen, sz);
+      it.pick.position.set(0, flen * 0.65, 0);
+      it.pick.scale.setScalar(Math.max(0.035, mouth * 0.8));
+      for (const g of it.ghosts) {
+        g.mesh.visible = opts.nested && g.L.n !== opts.level && r !== 0;
+        if (!g.mesh.visible) continue;
+        const gm = (g.L.diam / 2) * INCH * sizeK;
+        g.mesh.scale.set(sx / mouth * gm, lenAt(g.L) * len, sz / mouth * gm);
+        const gu = g.mat.uniforms;
+        gu.uPhase.value = it.phase; gu.uFocus.value = m0Focus(it) * 0.45; gu.uIntensity.value = r < 0 ? 0.35 : 0.6;
+        gu.uMud.value = r < 0 ? 0.6 : 0;
+      }
       const speed = (r === 0 || lin) ? 0 : (0.25 + mag * 0.12) * Math.sign(r);
       // Seen from outside the body, clockwise = open. The funnel axis always points outward,
       // so a growing phase is clockwise from outside for every aspect (front, back, root, crown).
@@ -655,7 +720,7 @@ export function buildEnergy(organCenters) {
         sc.uMud.value = clog ? 0.9 : r < 0 ? 0.5 : 0;
         sc.uIntensity.value = r < 0 ? 0.6 : 1;
         if (clog) {
-          it.haze.position.set(0, FUNNEL_LEN * 0.6, 0);
+          it.haze.position.set(0, flen * 0.6, 0);
           it.haze.scale.setScalar(mouth * 4.2 * (1 + 0.05 * Math.sin(time * 1.3 + it.phase)));
           it.haze.material.opacity = 0.75 * Math.min(1, m.uFocus.value);
         }
@@ -708,7 +773,7 @@ export function buildEnergy(organCenters) {
       pos.setXYZ(p.idx, tmp.x, tmp.y, tmp.z);
       const fade = (p.v > 1.0 ? 1 - (p.v - 1.0) / 0.6 : 1) * Math.min(1, p.v * 4);
       const f = chakraFocus(p.it.c.id);
-      cTmp.set(p.it.c.color);
+      cTmp.copy(p.it.color);
       if (r <= 0) cTmp.lerp(MUD, 0.7); else if (lin) cTmp.lerp(MUD, 0.4);
       const b = (r === 0 ? 0.15 : r < 0 ? 0.45 : lin ? 0.4 : 0.6 + Math.min(r, 10) * 0.05) * fade * Math.min(f, 1);
       col.setXYZ(p.idx, cTmp.r * b, cTmp.g * b, cTmp.b * b);
@@ -763,8 +828,12 @@ export function buildEnergy(organCenters) {
     // Chakra drawing: book view (vortex of small vortices, after Brennan's figures) or simple funnel.
     get book() { return opts.book; }, setBook(v) { opts.book = v; },
     get screen() { return opts.screen; }, setScreen(v) { opts.screen = v; },
+    // Which layer of the aura the chakras are drawn on (1–7), and whether to nest all seven.
+    get level() { return opts.level; }, setLevel(n) { opts.level = n; applyLevelColors(); },
+    get nested() { return opts.nested; }, setNested(v) { opts.nested = v; },
     // Aura layers 1–3 follow the body surface.
     setBodyGeometry(geo) {
+      measureSkin(chakras.items, [{ geo, pos: V(0, 0, 0), quat: new THREE.Quaternion(), scale: V(1, 1, 1) }]);
       for (const L of aura.layers) if (L.layer.n <= 3 && L.group.children.length === 1) L.group.children[0].geometry = geo;
     },
   };

@@ -195,6 +195,8 @@ const app = {
   setAuraOpacity: v => { energy.auraUniforms.uOpacity.value = v; },
   setSpeed: v => { speed = v; },
   get bookChakras() { return energy.book; }, setBookChakras: v => energy.setBook(v),
+  get chakraLevel() { return energy.level; }, setChakraLevel: n => { energy.setLevel(n); if (focus) ui.showInfo(focus, metrics); },
+  get chakraNested() { return energy.nested; }, setChakraNested: v => energy.setNested(v),
   get chakraScreen() { return energy.screen; }, setChakraScreen: v => energy.setScreen(v),
   setGlandsOnly: v => { showGlandsOnly = v; applyOrganVisibility(); },
   get sex() { return bodyState.sex; },
@@ -349,6 +351,8 @@ if (PRESETS[params.get('scenario')]) loadState(PRESETS[params.get('scenario')].s
 const auraParam = params.get('aura') === 'all' ? '1,2,3,4,5,6,7' : params.get('aura') ?? '';
 for (const n of auraParam.split(',').filter(Boolean)) app.setAuraLayer(+n, true);
 for (const k of (params.get('layers') ?? '').split(',').filter(Boolean)) { app.setVisible(k, true); ui.syncToggles(); }
+if (params.get('level')) app.setChakraLevel(Math.min(7, Math.max(1, +params.get('level') || 1)));
+if (params.get('nested')) app.setChakraNested(true);
 if (params.get('sex') === 'female') await setSex('F');
 if (params.get('sel')) {
   const [kind, id, aspect] = params.get('sel').split(':');
