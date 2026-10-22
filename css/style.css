@@ -166,3 +166,9 @@ dt { color: var(--muted); } dd { margin: 0; }
 .prow[hidden] { display: none; }
 .vlist { margin: 6px 0 10px; }
 .vlist > b { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+
+/* gland name tags: a dot on the gland and the name to its left */
+.glabel { width: 0; height: 0; position: relative; pointer-events: none; }
+.glabel::before { content: ''; position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px #fff; }
+.glabel span { position: absolute; right: 10px; top: -10px; font-size: 11px; white-space: nowrap; padding: 1px 7px; border-radius: 20px;
+  background: rgba(8,10,22,.75); border: 1px solid rgba(255,255,255,.5); color: var(--text); }

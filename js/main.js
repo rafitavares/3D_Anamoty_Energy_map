@@ -75,6 +75,32 @@ for (const c of CHAKRAS) {
   chakraLabels.add(o);
 }
 scene.add(chakraLabels);
+// Gland labels, shown with "Endocrine glands only": the glands are small (the pineal is
+// under a centimetre) and sit inside the chakras, so each one gets a name tag.
+const glandLabels = new THREE.Group();
+glandLabels.visible = false;
+for (const o of ORGANS.filter(x => x.gland)) {
+  const el = document.createElement('div');
+  el.className = 'glabel';
+  const tag = document.createElement('span');
+  // pairs that sit close together (pineal/pituitary, adrenals/pancreas) get their tags pulled apart
+  const dy = { pineal: -26, hipofise: 6, suprarrenais: -24, pancreas: 6 }[o.id] ?? -10;
+  tag.style.top = `${dy}px`;
+  el.append(tag);
+  const obj = new CSS2DObject(el);
+  obj.userData.organ = o; obj.userData.tag = tag;
+  obj.visible = false;
+  glandLabels.add(obj);
+}
+scene.add(glandLabels);
+function syncGlandLabels() {
+  for (const l of glandLabels.children) {
+    const o = l.userData.organ;
+    l.visible = showGlandsOnly && organPresent(o) && !hiddenSystems.has(o.system) && organs.group.visible;
+    l.position.copy(organs.centers[o.id]);
+    l.userData.tag.textContent = organName(o);
+  }
+}
 const selLabelEl = document.createElement('div'); selLabelEl.className = 'slabel';
 const selLabel = new CSS2DObject(selLabelEl); selLabel.visible = false; scene.add(selLabel);
 
@@ -146,7 +172,7 @@ const app = {
   view: name => VIEWS[name]?.(),
   setVisible(key, v) {
     if (key === 'skin') body.group.visible = v;
-    else if (key === 'organs') organs.group.visible = v;
+    else if (key === 'organs') { organs.group.visible = v; syncGlandLabels(); }
     // CSS2DRenderer checks each label's own visibility, not its parent's.
     else if (key === 'labels') chakraLabels.children.forEach(l => { l.visible = v; });
     else if (key === 'floor') floor.visible = v;
@@ -178,8 +204,9 @@ const app = {
 
 function applyOrganVisibility() {
   for (const o of ORGANS) {
-    organs.meshes[o.id].visible = organPresent(o) && !hiddenSystems.has(o.system) && (!showGlandsOnly || o.gland);
+    organs.meshes[o.id].visible = organPresent(o) && !hiddenSystems.has(o.system) && (!showGlandsOnly || !!o.gland);
   }
+  syncGlandLabels();
 }
 
 // ---------- Male / female body ----------
