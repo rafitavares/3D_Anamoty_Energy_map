@@ -6,19 +6,26 @@
 // over the opening (fig. 8-2, 15-5), and adds: "I am beginning to think that each
 // vortex of a chakra supplies a specific organ with energy."
 
-const GOLDEN = Math.PI * (3 - Math.sqrt(5));
-
-// Mouths of the n small cones packed on the unit disk of the chakra opening
-// (sunflower packing). Units: the big cone's mouth has radius 1.
-export function vortexLayout(n) {
+// Symmetric arrangement, like the petals of a lotus or the spokes of a wheel:
+// the small cones sit in rings, evenly spaced, mirror-symmetric about the body's midline.
+// Their mouths are ellipses (radial half-axis a, tangential half-axis b) that tile the
+// opening without overlapping. Units: the big cone's mouth has radius 1.
+//  4, 6, 10, 12, 16 → one ring.
+//  96 (brow)       → one ring of 96 rays: two mirror halves of 48 (Leadbeater, The Chakras).
+//  972 (crown)     → outer ring of 960 rays (Leadbeater) + inner ring of 12 (972 − 960).
+function ring(n, rIn, rOut, offset = Math.PI / 2) {
+  const rc = (rIn + rOut) / 2, a = (rOut - rIn) / 2 * 0.97;
+  const b = Math.min(a, rc * Math.sin(Math.PI / n) * 0.94);
   const out = [];
-  const rad = Math.min(0.62, 0.92 / Math.sqrt(n));
   for (let i = 0; i < n; i++) {
-    const r = n === 1 ? 0 : Math.sqrt((i + 0.5) / n) * (1 - rad * 0.9);
-    const a = i * GOLDEN + 0.4;
-    out.push({ x: Math.cos(a) * r, z: Math.sin(a) * r, r: rad });
+    const phi = offset + (2 * Math.PI * i) / n;
+    out.push({ x: Math.cos(phi) * rc, z: Math.sin(phi) * rc, a, b, phi, r: Math.sqrt(a * b) });
   }
   return out;
+}
+export function vortexLayout(n) {
+  if (n === 972) return [...ring(12, 0.06, 0.3), ...ring(960, 0.3, 1)];
+  return ring(n, n > 50 ? 0.1 : 0.12, 1);
 }
 
 const cache = new Map();

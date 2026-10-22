@@ -77,7 +77,7 @@ function funnelMaterial(color) {
         float rim = smoothstep(0.93,0.99,v)*(1.0-smoothstep(0.99,1.0,v));
         float edge = smoothstep(0.0,0.12,v);
         // fine longitudinal strands, like the hatching in Brennan's drawings
-        float strands = pow(0.5+0.5*cos(6.2831853*(vUv.x*48.0 - v*0.6 + uPhase*0.25)), 6.0);
+        float strands = pow(0.5+0.5*cos(6.2831853*(vUv.x*48.0 - v*0.6 + uPhase*2.674)), 6.0); // turns with the ring of small cones
         vec3 col = mix(uColor, vec3(0.35,0.28,0.2), uMud);
         float classic = (0.12+0.88*petal)*(0.25+0.75*v)*edge + rim*1.2;
         float envelope = (0.04 + 0.22*strands)*(0.3+0.7*v)*edge + rim*0.9;
@@ -89,7 +89,7 @@ function funnelMaterial(color) {
 
 // The small spiral cones that make up a chakra (book view). One instanced mesh per aspect,
 // in the unit space of the big cone (tip at the origin, mouth radius 1 at y = 1).
-// Per instance: aCenter = mouth position on the disk, aRad = mouth radius,
+// Per instance: aCenter = mouth position on the disk, aAxes = mouth ellipse (radial, tangential),
 // aForm = 0 normal, 1 sprung (A), 2 tip pulled out (B), 3 wedged open (F); aHi = highlight.
 const subConeGeo = (() => {
   const RU = 18, RT = 10, pos = [], idx = [];
@@ -109,31 +109,38 @@ function subVortexMaterial(color, n) {
     transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
     uniforms: {
       uColor: { value: new THREE.Color(color) }, uPhase: { value: 0 }, uTime: { value: 0 },
-      uIntensity: { value: 1 }, uMud: { value: 0 }, uFocus: { value: 1 }, uChaos: { value: 0 },
-      uDensity: { value: Math.min(1, 1.35 / Math.pow(n, 0.25)) }, uTurns: { value: n > 50 ? 1.0 : 2.0 },
+      uIntensity: { value: 1 }, uMud: { value: 0 }, uFocus: { value: 1 }, uChaos: { value: 0 }, uOrbit: { value: 0 },
+      uDensity: { value: n > 50 ? 2.4 / Math.sqrt(n) : Math.min(1, 1.35 / Math.pow(n, 0.25)) }, uTurns: { value: n > 50 ? 1.0 : 2.0 },
     },
     vertexShader: /* glsl */`
-      attribute vec2 aCenter; attribute float aRad, aSeed, aForm, aHi;
+      attribute vec2 aCenter, aAxes; attribute float aSeed, aForm, aHi;
+      uniform float uOrbit;
       varying vec2 vUv; varying float vSeed, vForm, vHi;
       void main(){
         float u = position.x, t = position.y;
-        float th = u * 6.2831853;
-        vec2 dir = normalize(aCenter + vec2(0.0013, 0.0007));
-        vec3 mouth = vec3(aCenter.x, 1.0, aCenter.y);
-        vec3 apex = vec3(aCenter.x * 0.04, 0.015, aCenter.y * 0.04);
-        float rad = aRad;
+        // the whole ring of small cones revolves together around the chakra's axis
+        float co = cos(uOrbit), so = sin(uOrbit);
+        vec2 cen = vec2(aCenter.x * co + aCenter.y * so, -aCenter.x * so + aCenter.y * co);
+        vec2 er = normalize(cen + vec2(0.0013, 0.0007));   // radial direction of this small cone
+        vec2 et = vec2(-er.y, er.x);                         // tangential direction
+        vec3 mouth = vec3(cen.x, 1.0, cen.y);
+        vec3 apex = vec3(cen.x * 0.04, 0.015, cen.y * 0.04);
+        vec2 ax = aAxes;
         float r = pow(t, 1.35);
         if (aForm > 0.5 && aForm < 1.5) {          // A: sprung out like a spring
-          mouth += vec3(dir.x * 0.55, 0.6, dir.y * 0.55);
+          mouth += vec3(er.x * 0.55, 0.6, er.y * 0.55);
           r *= 0.8 + 0.25 * sin(t * 46.0);
         } else if (aForm > 1.5 && aForm < 2.5) {   // B: tip pulled out, hanging loose
-          apex = vec3(dir.x * 1.55, 0.18, dir.y * 1.55);
+          apex = vec3(er.x * 1.55, 0.18, er.y * 1.55);
           r = pow(t, 2.2);
         } else if (aForm > 2.5) {                  // F: wedged open
-          rad *= 1.7;
+          ax *= vec2(1.35, 1.9);
         }
         vec3 c = mix(apex, mouth, t);
-        vec3 p = c + vec3(cos(th), 0.0, sin(th)) * rad * r;
+        // mouth = ellipse; u runs so that a growing phase turns the cone clockwise seen from outside
+        float th = -u * 6.2831853;
+        vec2 off = (er * cos(th) * ax.x + et * sin(th) * ax.y) * r;
+        vec3 p = c + vec3(off.x, 0.0, off.y);
         vUv = vec2(u, t); vSeed = aSeed; vForm = aForm; vHi = aHi;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
       }`,
@@ -219,7 +226,7 @@ function buildChakras(glow) {
       g.index = subConeGeo.index; g.attributes.position = subConeGeo.attributes.position;
       g.instanceCount = lay.length;
       g.setAttribute('aCenter', new THREE.InstancedBufferAttribute(new Float32Array(lay.flatMap(v => [v.x, v.z])), 2));
-      g.setAttribute('aRad', new THREE.InstancedBufferAttribute(new Float32Array(lay.map(v => v.r)), 1));
+      g.setAttribute('aAxes', new THREE.InstancedBufferAttribute(new Float32Array(lay.flatMap(v => [v.a, v.b])), 2));
       g.setAttribute('aSeed', new THREE.InstancedBufferAttribute(new Float32Array(lay.map(() => Math.random())), 1));
       g.setAttribute('aForm', new THREE.InstancedBufferAttribute(new Float32Array(lay.length), 1));
       g.setAttribute('aHi', new THREE.InstancedBufferAttribute(new Float32Array(lay.length).fill(0.5), 1));
@@ -243,7 +250,7 @@ function buildChakras(glow) {
       const upSign = aspect === 'front' ? -1 : aspect === 'back' ? 1 : 0;
       items.push({ c, aspect, key: `${c.id}.${aspect}`, holder, twist, mesh, mat, pick, core, phase: Math.random() * 10, dir, tip,
         upSign, tilt: 0, ang: 0, asAng: Math.random() * Math.PI, swing: Math.random() * 6,
-        lay, sub, subMat, screen, scrMat, haze, bend: 0, hiKey: '' });
+        lay, sub, subMat, screen, scrMat, haze, bend: 0, hiKey: '', orbit: 0 });
       twist.rotation.order = 'ZXY'; // spin orientation, then tilt, then the side pull of form E
     }
   }
@@ -597,8 +604,11 @@ export function buildEnergy(organCenters) {
       const sx = mouth * (1 + k) * sw, sz = mouth * (lin ? 0.15 : 1 - k * 0.7);
       it.mesh.scale.set(sx, FUNNEL_LEN * (r === 0 ? 0.6 : 0.8 + mag * 0.03) * len, sz);
       const speed = (r === 0 || lin) ? 0 : (0.25 + mag * 0.12) * Math.sign(r);
-      // Visto de fora, horário = aberto. O sentido do funil das costas é espelhado.
-      it.phase += dt * speed * (it.aspect === 'back' || it.c.axis === 'down' ? -1 : 1);
+      // Seen from outside the body, clockwise = open. The funnel axis always points outward,
+      // so a growing phase is clockwise from outside for every aspect (front, back, root, crown).
+      it.phase += dt * speed;
+      // the ring of small cones revolves with the chakra, more slowly than each cone spins
+      it.orbit = -it.phase * 0.35;
       const m = it.mat.uniforms;
       m.uPhase.value = it.phase;
       m.uMud.value = r <= 0 ? 0.75 : lin ? 0.5 : pat === 'EH' ? 0.3 : 0;
@@ -616,7 +626,7 @@ export function buildEnergy(organCenters) {
       if (opts.book) {
         const sm = it.subMat.uniforms;
         const am = aspectMetricsCache[it.key];
-        sm.uPhase.value = it.phase; sm.uTime.value = time;
+        sm.uPhase.value = it.phase; sm.uTime.value = time; sm.uOrbit.value = it.orbit;
         sm.uMud.value = Math.max(m.uMud.value, 0);
         sm.uIntensity.value = r === 0 ? 0.3 : r < 0 ? 0.55 : lin ? 0.5 : 0.7 + Math.min(mag, 10) * 0.05;
         sm.uFocus.value = m.uFocus.value;
@@ -634,9 +644,12 @@ export function buildEnergy(organCenters) {
             ha.array[i] = focusOrgan ? (owners[i] === focusOrgan ? 1.4 : 0.12) : 0.5;
           }
           fa.needsUpdate = true; ha.needsUpdate = true;
-          const hv = form === 'F' ? it.lay[s.v ?? 0] : null;
-          it.scrMat.uniforms.uHole.value.set(hv ? hv.x : 0, hv ? hv.z : 0, hv ? hv.r * 1.6 : 0);
         }
+        const hv = form === 'F' ? it.lay[s.v ?? 0] : null;
+        if (hv) {
+          const co = Math.cos(it.orbit), so = Math.sin(it.orbit);
+          it.scrMat.uniforms.uHole.value.set(hv.x * co + hv.z * so, -hv.x * so + hv.z * co, Math.max(hv.a, hv.b) * 1.5);
+        } else it.scrMat.uniforms.uHole.value.set(0, 0, 0);
         const sc = it.scrMat.uniforms;
         sc.uTime.value = time; sc.uFocus.value = m.uFocus.value; sc.uTorn.value = F.torn ? 1 : 0;
         sc.uMud.value = clog ? 0.9 : r < 0 ? 0.5 : 0;
@@ -680,8 +693,12 @@ export function buildEnergy(organCenters) {
         // each particle spirals down into one small cone toward the vertical power current
         const sv = p.it.lay[p.sub];
         const t = Math.min(p.v, 1.6);
-        const cr = sv.r * Math.pow(Math.min(t, 1), 1.35) * 0.7 * (t > 1 ? 1 + (t - 1) * 1.5 : 1);
-        tmp.set(sv.x * Math.max(t, 0.04) + Math.cos(p.a) * cr, t, sv.z * Math.max(t, 0.04) + Math.sin(p.a) * cr)
+        const co = Math.cos(p.it.orbit), so = Math.sin(p.it.orbit);
+        const cx = sv.x * co + sv.z * so, cz = -sv.x * so + sv.z * co;
+        const rl = Math.hypot(cx, cz) || 1, erx = cx / rl, erz = cz / rl;
+        const k = Math.pow(Math.min(t, 1), 1.35) * 0.7 * (t > 1 ? 1 + (t - 1) * 1.5 : 1);
+        const ca = Math.cos(p.a) * sv.a * k, sa = Math.sin(p.a) * sv.b * k;
+        tmp.set(cx * Math.max(t, 0.04) + erx * ca - erz * sa, t, cz * Math.max(t, 0.04) + erz * ca + erx * sa)
           .applyMatrix4(p.it.mesh.matrixWorld);
       } else {
       const rad = 0.03 + p.v; // continua alargando além da boca do funil
