@@ -110,7 +110,7 @@ function subVortexMaterial(color, n) {
     transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
     uniforms: {
       uColor: { value: new THREE.Color(color) }, uPhase: { value: 0 }, uTime: { value: 0 },
-      uIntensity: { value: 1 }, uMud: { value: 0 }, uFocus: { value: 1 }, uChaos: { value: 0 }, uOrbit: { value: 0 },
+      uIntensity: { value: 1 }, uMud: { value: 0 }, uFocus: { value: 1 }, uChaos: { value: 0 }, uOrbit: { value: 0 }, uPearl: { value: 0 },
       uDensity: { value: n > 50 ? 2.4 / Math.sqrt(n) : Math.min(1, 1.35 / Math.pow(n, 0.25)) }, uTurns: { value: n > 50 ? 1.0 : 2.0 },
     },
     vertexShader: /* glsl */`
@@ -146,7 +146,7 @@ function subVortexMaterial(color, n) {
         gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
       }`,
     fragmentShader: /* glsl */`
-      uniform vec3 uColor; uniform float uPhase, uTime, uIntensity, uMud, uFocus, uChaos, uDensity, uTurns;
+      uniform vec3 uColor; uniform float uPhase, uTime, uIntensity, uMud, uFocus, uChaos, uDensity, uTurns, uPearl;
       varying vec2 vUv; varying float vSeed, vForm, vHi;
       void main(){
         float t = vUv.y;
@@ -158,6 +158,9 @@ function subVortexMaterial(color, n) {
         float rim = smoothstep(0.88, 0.97, t) * (1.0 - smoothstep(0.985, 1.0, t));
         float a = ((0.1 + 0.9 * spiral) * (0.15 + 0.85 * t) * smoothstep(0.0, 0.12, t) + rim * 0.9);
         vec3 col = mix(uColor, vec3(0.35, 0.28, 0.2), uMud);
+        // level 6 "pearl": a soft mother-of-pearl play of colour over the base hue
+        vec3 ir = 0.5 + 0.5 * cos(6.2831853 * (vec3(0.0, 0.33, 0.67) + t * 0.8 + vSeed + uTime * 0.05));
+        col = mix(col, col * 0.75 + ir * 0.3, 0.5 * uPearl);
         if (vForm > 2.5) { col = mix(col, vec3(0.92), 0.65); a *= 0.7; }   // pale
         a *= uIntensity * uFocus * uDensity * (0.2 + 1.6 * vHi);
         gl_FragColor = vec4(col * a, a);
@@ -597,6 +600,7 @@ export function buildEnergy(organCenters) {
     for (const it of chakras.items) {
       it.color.set(L.color(it.c));
       for (const m of [it.mat, it.subMat, it.scrMat]) m.uniforms.uColor.value.copy(it.color);
+      it.subMat.uniforms.uPearl.value = L.n === 6 ? 1 : 0;
       it.core.material.color.copy(it.color);
     }
   }

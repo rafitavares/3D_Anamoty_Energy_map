@@ -261,8 +261,10 @@ export function initUI(app) {
         (() => {
           const L = CHAKRA_LEVELS[app.chakraLevel - 1];
           return h('div', { class: 'levelnote' }, h('h4', {}, `Shown on level ${L.n} — ${L.name}`),
-            h('p', {}, `Open end about ${L.dist} inch${L.dist > 1 ? 'es' : ''} outside the skin, about ${L.diam.toFixed(1)} inches across at C6. ${L.look}`),
-            h('p', { class: 'muted' }, 'Each chakra exists on all seven layers of the aura, nested like glasses: on each higher layer it reaches farther out, to the edge of that layer, and is slightly broader. Choose the level in the Layers tab. Layer 1 size (6 in wide, 1 in from the body) is Brennan’s; the widening per layer (+15%) is an estimate, since the book gives no number.'));
+            h('p', {}, h('b', {}, `Colour on this level: ${L.colorName(c)}. `), L.look),
+            h('div', { class: 'lvlcolors' }, ...CHAKRA_LEVELS.map(M => h('span', { class: M.n === L.n ? 'on' : '', title: `Level ${M.n}: ${M.colorName(c)}`, style: `--c:${M.color(c)}` }, M.n))),
+            h('p', {}, `Open end about ${L.dist} inch${L.dist > 1 ? 'es' : ''} outside the skin, about ${L.diam.toFixed(1)} inches across at C6.`),
+            h('p', { class: 'muted' }, 'Colours: Brennan “Chakras Colors/Levels/Vortices Chart”. Each chakra exists on all seven layers of the aura, nested like glasses: on each higher layer it reaches farther out, to the edge of that layer, and is slightly broader. Choose the level in the Layers tab. Layer 1 size (6 in wide, 1 in from the body) is Brennan’s; the widening per layer (+15%) is an estimate, since the book gives no number.'));
         })(),
         h('h4', {}, `Small vortices — ${c.vortices} per ${Object.keys(c.aspects).length > 1 ? 'aspect' : 'chakra'}`),
         h('p', { class: 'muted' }, 'Each chakra is a large cone made of smaller spiral cones. In health they spin in synchrony; in disease they turn fast, slow, jerky or lopsided. Brennan: “I am beginning to think that each vortex of a chakra supplies a specific organ with energy.” She gives two examples (pancreas and liver vortices of the solar plexus); the other assignments follow the direction each vortex faces.'),

@@ -187,29 +187,35 @@ export const ORGANS = [
 // outer edge she gives for each layer. diam = mouth diameter in inches at a C6 reading:
 // 6 in on layer 1; "slightly broader" per layer is not quantified in the book, so the
 // app uses +15% per layer (an estimate).
-// color: how the chakras look on that layer, from her description of each layer.
-const RAINBOW_L2 = ['#ff2a2a', '#ff5a1f', '#ffd21a', '#3ddc4a', '#5ec8ff', '#4b3bff', '#ffffff'];
-export const CHAKRA_LEVELS = [
-  { n: 1, name: 'Etheric', dist: 1, look: 'Vortices made of a net of light, the same light blue to grey as the etheric body.',
-    color: () => '#8fb4e8' },
-  { n: 2, name: 'Emotional', dist: 3, look: 'Each chakra a vortex of a different colour, following the rainbow: red, red-orange, yellow, grass green, sky blue, indigo, white.',
-    color: c => RAINBOW_L2[c.n - 1] },
-  { n: 3, name: 'Mental', dist: 8, look: 'The mental body is mostly yellow; Brennan does not describe the chakra colours of this layer separately, so they are shown in its yellow.',
-    color: () => '#ffe066' },
-  { n: 4, name: 'Astral', dist: 12, look: 'The same rainbow octave as the emotional layer, each chakra infused with the rose light of love.',
-    color: c => mixHex(RAINBOW_L2[c.n - 1], '#ff7fb0', 0.45) },
-  { n: 5, name: 'Etheric template', dist: 24, look: 'Clear, transparent lines on a cobalt-blue background, like an architect’s blueprint in negative space.',
-    color: () => '#3a5bff' },
-  { n: 6, name: 'Celestial', dist: 33, look: 'Shimmering opalescent pastel light with a gold-silver shine.',
-    color: c => mixHex(RAINBOW_L2[c.n - 1], '#ffffff', 0.6) },
-  { n: 7, name: 'Ketheric template', dist: 42, look: 'All chakras and body forms appear to be made of golden light, a golden grid.',
-    color: () => '#ffd36a' },
-].map(L => ({ ...L, diam: 6 * 1.15 ** (L.n - 1) }));
-function mixHex(a, b, t) {
-  const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
-  const [x, y] = [p(a), p(b)];
-  return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join('');
-}
+// Colours per chakra and level: "Chakras Colors/Levels/Vortices Chart" (Barbara Brennan, Inc.,
+// course material, 2025), consistent with Light Emerging fig. 11-1 and ch. 22 and Core Light
+// Healing ch. 1. names = the chart's wording; hex = the app's rendering of that colour.
+const LEVEL_COLORS = {
+  1: { names: Array(7).fill('Blue grid'), hex: Array(7).fill('#4f8dff') },
+  2: { names: ['Red', 'Orange', 'Lemon yellow', 'Grass green', 'Sky blue', 'Indigo', 'White'],
+       hex: ['#ff2a2a', '#ff8a1c', '#fff44f', '#4cc417', '#6cc8ff', '#4b3bff', '#ffffff'] },
+  3: { names: Array(7).fill('Lemon yellow grid'), hex: Array(7).fill('#fff44f') },
+  4: { names: ['Rose-red', 'Salmon', 'Peach', 'Rose', 'Violet', 'Purple', 'White-rose'],
+       hex: ['#ff3b6b', '#ff8572', '#ffb88a', '#ff6fae', '#9b5cff', '#a02ad9', '#ffd9e6'] },
+  5: { names: Array(7).fill('Cobalt blue, empty lines'), hex: Array(7).fill('#2f5bff') },
+  6: { names: ['Rose-red pearl', 'Salmon pearl', 'Peach pearl', 'Rose pearl', 'Lilac pearl', 'Lavender pearl', 'Silver pearl'],
+       hex: ['#f6a2b6', '#f9bfae', '#fdd9bf', '#f9c3da', '#d9c2f2', '#c8c4f6', '#e4e8f2'] },
+  7: { names: Array(7).fill('Golden grid'), hex: Array(7).fill('#ffcf4a') },
+};
+const LEVEL_INFO = [
+  [1, 'Etheric', 1, 'Structured level: the chakras are made of blue lines of light with particles of light flowing through them.'],
+  [2, 'Emotional', 3, 'Unstructured level: the chakras are diffuse coloured clouds of light, one rainbow colour each.'],
+  [3, 'Mental', 8, 'Structured level: finer, scintillating lines of lemon-yellow light.'],
+  [4, 'Astral', 12, 'Unstructured level: multicoloured bioplasma, thicker than on level 2, with much rose light.'],
+  [5, 'Etheric template', 24, 'Like the negative of a photograph: empty lines on cobalt blue, the blueprint for level 1.'],
+  [6, 'Celestial', 33, 'The chakras radiate beautiful iridescent, pearly light.'],
+  [7, 'Ketheric template', 42, 'Structured level: very strong gold lines of light, a golden grid.'],
+];
+export const CHAKRA_LEVELS = LEVEL_INFO.map(([n, name, dist, look]) => ({
+  n, name, dist, look, diam: 6 * 1.15 ** (n - 1),
+  color: c => LEVEL_COLORS[n].hex[c.n - 1],
+  colorName: c => LEVEL_COLORS[n].names[c.n - 1],
+}));
 
 export const AURA_LAYERS = [
   { n: 1, name: 'Etheric body', color: '#7fb8ff', dist: '¼ to 2 inches',
